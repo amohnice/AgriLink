@@ -1,0 +1,5 @@
+[
+  { "crop": "maize", "supply": 100, "demand": 200, "price": 30 },
+  { "crop": "wheat", "supply": 150, "demand": 180, "price": 45 },
+  { "crop": "rice", "supply": 80, "demand": 220, "price": 50 }
+]

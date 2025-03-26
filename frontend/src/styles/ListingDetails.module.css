@@ -1,0 +1,162 @@
+.container {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.backButton {
+  color: #666;
+  text-decoration: none;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.backButton:hover {
+  color: #333;
+}
+
+.content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+}
+
+.imageSection {
+  width: 100%;
+}
+
+.mainImage {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.details {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.title {
+  font-size: 2rem;
+  margin: 0;
+  color: #333;
+}
+
+.meta {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.price {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #2c5282;
+}
+
+.quantity {
+  font-size: 1.1rem;
+  color: #666;
+}
+
+.status {
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.available {
+  background-color: #c6f6d5;
+  color: #22543d;
+}
+
+.sold {
+  background-color: #fed7d7;
+  color: #822727;
+}
+
+.seller, .description {
+  border-top: 1px solid #eee;
+  padding-top: 1.5rem;
+}
+
+.seller h3, .description h3 {
+  margin: 0 0 1rem;
+  color: #333;
+}
+
+.seller p {
+  margin: 0.5rem 0;
+  color: #666;
+}
+
+.description p {
+  line-height: 1.6;
+  color: #444;
+}
+
+.button {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.editButton {
+  background-color: #4a5568;
+  color: white;
+}
+
+.editButton:hover {
+  background-color: #2d3748;
+}
+
+.contactButton {
+  background-color: #2c5282;
+  color: white;
+  width: 100%;
+  text-align: center;
+}
+
+.contactButton:hover {
+  background-color: #2a4365;
+}
+
+.error {
+  text-align: center;
+  padding: 2rem;
+}
+
+.error h2 {
+  color: #e53e3e;
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+  .content {
+    grid-template-columns: 1fr;
+  }
+
+  .meta {
+    flex-direction: column;
+    gap: 1rem;
+  }
+} 

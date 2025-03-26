@@ -1,0 +1,191 @@
+/* Card Styles */
+.card {
+  background: var(--color-background);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Button Variants */
+.buttonPrimary {
+  background-color: var(--color-primary);
+  color: white;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  transition: all var(--transition-fast);
+}
+
+.buttonPrimary:hover {
+  background-color: var(--color-primary-dark);
+}
+
+.buttonSecondary {
+  background-color: var(--color-secondary);
+  color: white;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  transition: all var(--transition-fast);
+}
+
+.buttonSecondary:hover {
+  background-color: var(--color-secondary-dark);
+}
+
+.buttonOutline {
+  background-color: transparent;
+  color: var(--color-primary);
+  border: 2px solid var(--color-primary);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  transition: all var(--transition-fast);
+}
+
+.buttonOutline:hover {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+/* Form Controls */
+.formGroup {
+  margin-bottom: var(--spacing-md);
+}
+
+.label {
+  display: block;
+  margin-bottom: var(--spacing-xs);
+  color: var(--color-text-primary);
+  font-weight: 500;
+}
+
+.input {
+  width: 100%;
+  padding: var(--spacing-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
+  transition: border-color var(--transition-fast);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.select {
+  width: 100%;
+  padding: var(--spacing-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
+  background-color: var(--color-background);
+  cursor: pointer;
+  transition: border-color var(--transition-fast);
+}
+
+.select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+/* Badge Styles */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+}
+
+.badgeSuccess {
+  background-color: var(--color-success);
+  color: white;
+}
+
+.badgeError {
+  background-color: var(--color-error);
+  color: white;
+}
+
+.badgeWarning {
+  background-color: var(--color-warning);
+  color: white;
+}
+
+.badgeInfo {
+  background-color: var(--color-info);
+  color: white;
+}
+
+/* Avatar */
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  object-fit: cover;
+}
+
+.avatarSmall {
+  width: 32px;
+  height: 32px;
+}
+
+.avatarLarge {
+  width: 48px;
+  height: 48px;
+}
+
+/* Loading Spinner */
+.spinner {
+  border: 3px solid var(--color-border);
+  border-radius: 50%;
+  border-top: 3px solid var(--color-primary);
+  width: 24px;
+  height: 24px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Alert Messages */
+.alert {
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.alertSuccess {
+  background-color: rgba(67, 160, 71, 0.1);
+  border: 1px solid var(--color-success);
+  color: var(--color-success);
+}
+
+.alertError {
+  background-color: rgba(211, 47, 47, 0.1);
+  border: 1px solid var(--color-error);
+  color: var(--color-error);
+}
+
+.alertWarning {
+  background-color: rgba(255, 160, 0, 0.1);
+  border: 1px solid var(--color-warning);
+  color: var(--color-warning);
+}
+
+.alertInfo {
+  background-color: rgba(25, 118, 210, 0.1);
+  border: 1px solid var(--color-info);
+  color: var(--color-info);
+} 
