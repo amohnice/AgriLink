@@ -2,6 +2,21 @@ const Product = require("../models/Product");
 const User = require("../models/User");
 const path = require('path');
 
+// Get all listings
+const getAllListings = async (req, res) => {
+  try {
+    const listings = await Product.find({ status: 'available' })
+      .sort({ createdAt: -1 })
+      .populate('seller', 'name email')
+      .exec();
+
+    res.json(listings);
+  } catch (error) {
+    console.error('Error fetching listings:', error);
+    res.status(500).json({ message: 'Failed to fetch listings' });
+  }
+};
+
 // Create a new listing
 const createListing = async (req, res) => {
   try {
@@ -125,5 +140,6 @@ module.exports = {
   getRecentListings,
   getSavedListings,
   saveListing,
-  removeSavedListing
+  removeSavedListing,
+  getAllListings
 };

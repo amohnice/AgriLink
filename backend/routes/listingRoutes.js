@@ -7,11 +7,13 @@ const {
   getRecentListings,
   getSavedListings,
   saveListing,
-  removeSavedListing
+  removeSavedListing,
+  getAllListings
 } = require('../controllers/listingController');
 const isFarmer = require('../middleware/isFarmer');
 
 // Public routes
+router.get('/', getAllListings);
 router.get('/recent', getRecentListings);
 
 // Protected routes
