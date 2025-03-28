@@ -99,6 +99,7 @@ function ListingDetails() {
   }
 
   const isOwner = user?.id === listing.seller?._id;
+  const isBuyer = user?.role === 'buyer';
 
   return (
     <div className={styles.container}>
@@ -153,20 +154,34 @@ function ListingDetails() {
             <p>{listing.description}</p>
           </div>
 
-          {!isOwner && (
+          {!isOwner && user && (
             <div className={styles.actionButtons}>
-              <Link
-                to={`/chat?seller=${listing.seller?._id}`}
-                className={`${styles.button} ${styles.contactButton}`}
-              >
-                Contact Seller
-              </Link>
-              <button
-                onClick={() => setShowPaymentModal(true)}
-                className={`${styles.button} ${styles.payButton}`}
-              >
-                Pay with M-Pesa
-              </button>
+              {isBuyer ? (
+                <>
+                  <Link
+                    to={`/chat?seller=${listing.seller?._id}`}
+                    className={`${styles.button} ${styles.contactButton}`}
+                  >
+                    Contact Seller
+                  </Link>
+                  <button
+                    onClick={() => setShowPaymentModal(true)}
+                    className={`${styles.button} ${styles.payButton}`}
+                  >
+                    Pay with M-Pesa
+                  </button>
+                </>
+              ) : (
+                <div className={styles.message}>
+                  <p>You need a buyer account to purchase or contact the seller.</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {!user && (
+            <div className={styles.message}>
+              <p>Please <Link to="/login" className={styles.link}>log in</Link> to contact the seller or make a purchase.</p>
             </div>
           )}
         </div>
