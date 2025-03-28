@@ -37,8 +37,14 @@ const productSchema = new mongoose.Schema(
       required: true,
     },
     images: [{
-      type: String,
-      default: "https://placehold.co/300x200"
+      url: {
+        type: String,
+        required: true
+      },
+      filename: {
+        type: String,
+        required: true
+      }
     }],
     location: {
       type: String,

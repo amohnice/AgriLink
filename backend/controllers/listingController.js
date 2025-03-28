@@ -22,6 +22,28 @@ const createListing = async (req, res) => {
   try {
     const { title, description, price, quantity, category, location } = req.body;
 
+    // Validate required fields
+    if (!title || !description || !price || !quantity || !category || !location) {
+      return res.status(400).json({ 
+        message: 'Missing required fields',
+        missing: {
+          title: !title,
+          description: !description,
+          price: !price,
+          quantity: !quantity,
+          category: !category,
+          location: !location
+        }
+      });
+    }
+
+    // Validate price and quantity
+    if (price <= 0 || quantity <= 0) {
+      return res.status(400).json({ 
+        message: 'Price and quantity must be greater than 0' 
+      });
+    }
+
     // Handle image uploads
     const images = req.files ? req.files.map(file => ({
       url: `/uploads/${file.filename}`,
@@ -32,8 +54,8 @@ const createListing = async (req, res) => {
     const listing = new Product({
       title,
       description,
-      price,
-      quantity,
+      price: Number(price),
+      quantity: Number(quantity),
       category,
       location,
       images,
@@ -49,7 +71,16 @@ const createListing = async (req, res) => {
     res.status(201).json(listing);
   } catch (error) {
     console.error('Error creating listing:', error);
-    res.status(500).json({ message: 'Failed to create listing' });
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ 
+        message: 'Validation error',
+        errors: Object.values(error.errors).map(err => err.message)
+      });
+    }
+    res.status(500).json({ 
+      message: 'Failed to create listing',
+      error: error.message 
+    });
   }
 };
 

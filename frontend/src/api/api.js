@@ -76,7 +76,10 @@ export const createListing = async (listingData) => {
     return response.data;
   } catch (error) {
     console.error('Error creating listing:', error.response?.data || error.message);
-    throw error;
+    if (error.response?.data?.message) {
+      throw new Error(error.response.data.message);
+    }
+    throw new Error('Failed to create listing. Please try again.');
   }
 };
 
