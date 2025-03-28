@@ -21,7 +21,7 @@ function BuyerDashboard() {
     try {
       setLoading(true);
       setError(null);
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/listings/recent`);
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/products/recent`);
       setRecentListings(response.data);
     } catch (err) {
       console.error('Error fetching recent listings:', err);
@@ -35,7 +35,7 @@ function BuyerDashboard() {
   const fetchSavedListings = async () => {
     try {
       const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/listings/saved`,
+        `${import.meta.env.VITE_API_URL}/api/products/saved`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`
@@ -58,7 +58,7 @@ function BuyerDashboard() {
   const handleSave = async (listingId) => {
     try {
       await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/listings/${listingId}/save`,
+        `${import.meta.env.VITE_API_URL}/api/products/${listingId}/save`,
         {},
         {
           headers: {
@@ -82,7 +82,7 @@ function BuyerDashboard() {
   const handleRemoveSaved = async (listingId) => {
     try {
       await axios.delete(
-        `${import.meta.env.VITE_API_URL}/api/listings/${listingId}/save`,
+        `${import.meta.env.VITE_API_URL}/api/products/${listingId}/save`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`

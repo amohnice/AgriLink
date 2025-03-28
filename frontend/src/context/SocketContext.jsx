@@ -29,12 +29,12 @@ export function SocketProvider({ children }) {
       const token = localStorage.getItem('token');
       const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       
-      // Connect to the chat namespace with the /api prefix
-      currentSocket = io(`${baseURL}/api/chat`, {
+      // Connect to the chat namespace
+      currentSocket = io(`${baseURL}`, {
+        path: '/socket.io',
         auth: { token },
         withCredentials: true,
         transports: ['websocket', 'polling'],
-        path: '/socket.io',
         autoConnect: true,
         reconnection: true,
         reconnectionAttempts: 5,
