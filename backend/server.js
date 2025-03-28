@@ -4,16 +4,15 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const morgan = require("morgan");
 const http = require("http");
+const path = require("path");
 const connectDB = require("./config/db");
 const userRoutes = require("./routes/userRoutes");
-const productRoutes = require("./routes/productRoutes");
 const listingRoutes = require("./routes/listingRoutes");
 const authRoutes = require("./routes/authRoutes");
 const aiRoutes = require("./routes/aiRoutes");
 const { trainModel } = require("./models/pricePredictionModel");
 const setupSocket = require("./socket");
 const chatRoutes = require("./routes/chatRoutes");
-const jwt = require("jsonwebtoken");
 
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
 
@@ -31,7 +30,9 @@ app.use(cors({
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
 app.use(morgan("dev"));
-app.use("/api/ai", aiRoutes);
+
+// Serve uploaded files
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 connectDB();
 trainModel();
@@ -42,9 +43,9 @@ const io = setupSocket(server);
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
-app.use("/api/products", productRoutes);
-app.use("/api/listings", listingRoutes);
+app.use("/api/products", listingRoutes);
 app.use("/api/chat", chatRoutes);
+app.use("/api/ai", aiRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

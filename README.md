@@ -142,5 +142,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Contact
 
-Your Name - [@amoh_nice](https://x.com/amoh_nice)
+Amos Korir - [@amoh_nice](https://x.com/amoh_nice)
 Project Link: [https://github.com/amohnice/AgriLink](https://github.com/amohnice/AgriLink.git)

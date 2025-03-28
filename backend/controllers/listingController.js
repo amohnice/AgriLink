@@ -1,10 +1,17 @@
 const Product = require("../models/Product");
 const User = require("../models/User");
+const path = require('path');
 
 // Create a new listing
 const createListing = async (req, res) => {
   try {
-    const { title, description, price, quantity, category, location, images } = req.body;
+    const { title, description, price, quantity, category, location } = req.body;
+
+    // Handle image uploads
+    const images = req.files ? req.files.map(file => ({
+      url: `/uploads/${file.filename}`,
+      filename: file.filename
+    })) : [];
 
     // Create new listing
     const listing = new Product({

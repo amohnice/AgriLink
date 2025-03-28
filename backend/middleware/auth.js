@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
+const User = require("../models/User");
 
-module.exports = (req, res, next) => {
+const auth = async (req, res, next) => {
   try {
     // Get token from header
     const token = req.header("Authorization")?.replace("Bearer ", "");
@@ -12,9 +13,16 @@ module.exports = (req, res, next) => {
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET || "your-secret-key");
     
-    // Set user ID in request
+    // Get user from database
+    const user = await User.findById(decoded.id).select('role');
+    if (!user) {
+      return res.status(401).json({ message: "User not found" });
+    }
+    
+    // Set user info in request
     req.user = {
-      id: decoded.id
+      id: decoded.id,
+      role: user.role
     };
     
     next();
@@ -23,3 +31,5 @@ module.exports = (req, res, next) => {
     res.status(401).json({ message: "Token is not valid" });
   }
 };
+
+module.exports = { auth };

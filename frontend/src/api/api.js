@@ -49,14 +49,34 @@ export const fetchListings = async () => {
   }
 };
 
-// Create Listing (Protected)
+// Create a new listing
 export const createListing = async (listingData) => {
   try {
-    const response = await api.post("/api/products", listingData);
+    const formData = new FormData();
+    
+    // Append all non-image fields
+    Object.keys(listingData).forEach(key => {
+      if (key !== 'images') {
+        formData.append(key, listingData[key]);
+      }
+    });
+
+    // Append images
+    if (listingData.images && listingData.images.length > 0) {
+      listingData.images.forEach((image, index) => {
+        formData.append('images', image);
+      });
+    }
+
+    const response = await api.post('/api/products', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
     return response.data;
   } catch (error) {
-    console.error("Error creating listing:", error.response?.data || error.message);
-    return null;
+    console.error('Error creating listing:', error.response?.data || error.message);
+    throw error;
   }
 };
 

@@ -11,7 +11,7 @@ const generateToken = (id) => {
   return jwt.sign({ id }, secret, { expiresIn: "30d" });
 };
 
-exports.registerUser = async (req, res) => {
+const registerUser = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
 
@@ -48,158 +48,113 @@ exports.registerUser = async (req, res) => {
     const user = await User.create({
       name: String(name),
       email: String(email),
-      password: String(password),
-      role: String(role || 'buyer')
+      password: await bcrypt.hash(password, 10),
+      role: role || 'buyer'
     });
 
-    // Generate token
-    const token = generateToken(user._id);
-
-    // Return success response
-    res.status(201).json({
-      token,
-      user: {
-        id: user._id,
+    if (user) {
+      res.status(201).json({
+        _id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role
-      }
-    });
+        role: user.role,
+        token: generateToken(user._id)
+      });
+    } else {
+      res.status(400).json({ message: "Invalid user data" });
+    }
   } catch (error) {
     console.error("Registration error:", error);
-    res.status(500).json({ 
-      message: "Server error during registration",
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+    res.status(500).json({ message: "Server error during registration" });
   }
 };
 
-exports.loginUser = async (req, res) => {
+const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
-    console.log('Login attempt for email:', email);
-    
-    // Validate input
+
+    // Validate required fields
     if (!email || !password) {
-      console.log('Missing email or password');
-      return res.status(400).json({ message: "Please provide email and password" });
+      return res.status(400).json({ 
+        message: "Please provide email and password",
+        missing: {
+          email: !email,
+          password: !password
+        }
+      });
     }
 
-    // Find user by email
-    const user = await User.findOne({ email: String(email) });
-    console.log('User found:', user ? 'yes' : 'no');
-    
+    // Find user
+    const user = await User.findOne({ email });
     if (!user) {
-      console.log('User not found');
-      return res.status(401).json({ message: "Invalid credentials" });
+      return res.status(401).json({ message: "Invalid email or password" });
     }
 
-    // Verify password
+    // Check password
     const isMatch = await bcrypt.compare(password, user.password);
-    console.log('Password match:', isMatch ? 'yes' : 'no');
-    
     if (!isMatch) {
-      console.log('Password does not match');
-      return res.status(401).json({ message: "Invalid credentials" });
+      return res.status(401).json({ message: "Invalid email or password" });
     }
 
-    // Generate token
-    const token = generateToken(user._id);
-    if (!token) {
-      console.log('Failed to generate token');
-      throw new Error("Failed to generate token");
-    }
-
-    console.log('Login successful for user:', user.email);
-    
-    // Return response
     res.json({
-      token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role
-      }
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      token: generateToken(user._id)
     });
   } catch (error) {
     console.error("Login error:", error);
-    res.status(500).json({ 
-      message: "Server error",
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+    res.status(500).json({ message: "Server error during login" });
   }
 };
 
-// Get user by ID
-exports.getUserById = async (req, res) => {
+const getUserById = async (req, res) => {
   try {
-    const userId = req.params.id;
-    
-    // Validate MongoDB ObjectId
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-      return res.status(400).json({ message: "Invalid user ID format" });
-    }
-
-    const user = await User.findById(userId).select("-password");
+    const user = await User.findById(req.params.id).select('-password');
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-
-    res.json({
-      id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      location: user.location,
-      phone: user.phone
-    });
+    res.json(user);
   } catch (error) {
     console.error("Error fetching user:", error);
-    res.status(500).json({ 
-      message: "Server error",
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+    res.status(500).json({ message: "Server error while fetching user" });
   }
 };
 
-// Update user
-exports.updateUser = async (req, res) => {
+const updateUser = async (req, res) => {
   try {
-    const { name, email, location, phone } = req.body;
-    const userId = req.params.id;
-
-    // Validate MongoDB ObjectId
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-      return res.status(400).json({ message: "Invalid user ID format" });
-    }
-
-    const user = await User.findById(userId);
+    const user = await User.findById(req.params.id);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Update user fields
-    user.name = name || user.name;
-    user.email = email || user.email;
-    user.location = location || user.location;
-    user.phone = phone || user.phone;
+    // Update fields
+    user.name = req.body.name || user.name;
+    user.email = req.body.email || user.email;
+    if (req.body.password) {
+      user.password = await bcrypt.hash(req.body.password, 10);
+    }
+    user.role = req.body.role || user.role;
+    user.location = req.body.location || user.location;
 
-    await user.save();
-
+    const updatedUser = await user.save();
     res.json({
-      id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      location: user.location,
-      phone: user.phone
+      _id: updatedUser._id,
+      name: updatedUser.name,
+      email: updatedUser.email,
+      role: updatedUser.role,
+      location: updatedUser.location
     });
   } catch (error) {
     console.error("Error updating user:", error);
-    res.status(500).json({ 
-      message: "Server error",
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+    res.status(500).json({ message: "Server error while updating user" });
   }
+};
+
+module.exports = {
+  registerUser,
+  loginUser,
+  getUserById,
+  updateUser
 };

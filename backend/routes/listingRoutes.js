@@ -1,5 +1,7 @@
 const express = require('express');
 const router = express.Router();
+const { auth } = require('../middleware/auth');
+const upload = require('../middleware/upload');
 const {
   createListing,
   getRecentListings,
@@ -7,7 +9,6 @@ const {
   saveListing,
   removeSavedListing
 } = require('../controllers/listingController');
-const auth = require('../middleware/auth');
 const isFarmer = require('../middleware/isFarmer');
 
 // Public routes
@@ -19,6 +20,6 @@ router.post('/:id/save', auth, saveListing);
 router.delete('/:id/save', auth, removeSavedListing);
 
 // Farmer-only routes
-router.post('/', auth, isFarmer, createListing);
+router.post('/', auth, isFarmer, upload.array('images', 5), createListing);
 
 module.exports = router;

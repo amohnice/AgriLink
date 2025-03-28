@@ -84,21 +84,16 @@ function CreateListing() {
     setError("");
 
     try {
+      // Create a copy of formData without the images array
       const listingData = {
         ...formData,
-        seller: user.id,
-        price: parseFloat(formData.price),
-        quantity: parseInt(formData.quantity, 10)
+        images: imageFiles // Use the actual image files instead of base64 strings
       };
-      
+
       await createListing(listingData);
-      
-      // Clean up object URLs
-      imagePreviews.forEach(preview => URL.revokeObjectURL(preview));
-      
-      navigate("/listings");
+      navigate("/farmer-dashboard");
     } catch (err) {
-      setError(err.message || "Failed to create listing");
+      setError(err.response?.data?.message || "Failed to create listing");
     } finally {
       setLoading(false);
     }

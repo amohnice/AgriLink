@@ -64,15 +64,13 @@ export function AuthProvider({ children }) {
       };
       const response = await register(userData);
       
-      // The response is already the data object from the API call
-      const { token, user } = response;
-      if (!token || !user) {
-        throw new Error('Missing token or user data in response');
+      if (!response || !response.token || !response.user) {
+        throw new Error('Invalid response from server');
       }
       
-      localStorage.setItem("token", token);
-      setUser(user);
-      return user;
+      localStorage.setItem("token", response.token);
+      setUser(response.user);
+      return response.user;
     } catch (error) {
       console.error('Registration error:', error);
       throw error;
