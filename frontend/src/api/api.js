@@ -63,7 +63,7 @@ export const createListing = async (listingData) => {
 
     // Append images
     if (listingData.images && listingData.images.length > 0) {
-      listingData.images.forEach((image, index) => {
+      listingData.images.forEach(image => {
         formData.append('images', image);
       });
     }
@@ -214,14 +214,31 @@ export const createConversation = async (participantId) => {
   }
 };
 
-export const sendMessage = async (conversationId, text) => {
+export const sendMessage = async (conversationId, data) => {
   try {
-    const response = await api.post(
-      `/api/chat/conversations/${conversationId}/messages`,
-      { text }
+    const headers = {
+      Authorization: `Bearer ${localStorage.getItem("token")}`
+    };
+
+    // If data is FormData (for image uploads), don't set Content-Type
+    // Let the browser set it automatically with the boundary
+    if (!(data instanceof FormData)) {
+      headers['Content-Type'] = 'application/json';
+      data = JSON.stringify({ conversationId, text: data });
+    } else {
+      // If it's FormData, make sure conversationId is included
+      data.append('conversationId', conversationId);
+    }
+
+    const response = await axios.post(
+      `${API_URL}/api/messages`,
+      data,
+      { headers }
     );
+
     return response.data;
   } catch (error) {
-    throw error.response?.data || error.message;
+    console.error('Error sending message:', error);
+    throw error;
   }
 };

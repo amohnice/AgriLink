@@ -49,31 +49,24 @@ function CreateListing() {
       const preview = URL.createObjectURL(file);
       newImageFiles.push(file);
       newImagePreviews.push(preview);
-
-      // Convert to base64
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData(prev => ({
-          ...prev,
-          images: [...prev.images, reader.result]
-        }));
-      };
-      reader.readAsDataURL(file);
     }
 
     setImageFiles(newImageFiles);
     setImagePreviews(newImagePreviews);
+    setFormData(prev => ({
+      ...prev,
+      images: newImageFiles
+    }));
     setError('');
   };
 
   const removeImage = (index) => {
     const newImageFiles = imageFiles.filter((_, i) => i !== index);
     const newImagePreviews = imagePreviews.filter((_, i) => i !== index);
-    const newImages = formData.images.filter((_, i) => i !== index);
 
     setImageFiles(newImageFiles);
     setImagePreviews(newImagePreviews);
-    setFormData(prev => ({ ...prev, images: newImages }));
+    setFormData(prev => ({ ...prev, images: newImageFiles }));
 
     URL.revokeObjectURL(imagePreviews[index]);
   };
@@ -84,16 +77,16 @@ function CreateListing() {
     setError("");
 
     try {
-      // Create a copy of formData without the images array
       const listingData = {
         ...formData,
-        images: imageFiles // Use the actual image files instead of base64 strings
+        price: parseFloat(formData.price),
+        quantity: parseInt(formData.quantity)
       };
 
       await createListing(listingData);
-      navigate("/farmer/dashboard");
+      navigate("/listings");
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to create listing");
+      setError(err.message || "Failed to create listing");
     } finally {
       setLoading(false);
     }

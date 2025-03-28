@@ -5,6 +5,9 @@ const Message = require("../models/Message");
 const User = require("../models/User");
 const { auth } = require("../middleware/auth");
 const mongoose = require("mongoose");
+const multer = require("multer");
+const { storage } = require("../config/cloudinary");
+const upload = multer({ storage });
 
 // Get all conversations for the current user
 router.get("/conversations", auth, async (req, res) => {
@@ -154,46 +157,47 @@ router.post("/conversations", auth, async (req, res) => {
 });
 
 // Send a message
-router.post("/conversations/:conversationId/messages", auth, async (req, res) => {
+router.post("/messages", auth, upload.single("image"), async (req, res) => {
   try {
-    const { text } = req.body;
-    const conversation = await Conversation.findById(req.params.conversationId);
+    const { conversationId, text } = req.body;
+    const sender = req.user._id;
 
-    if (!conversation) {
-      return res.status(404).json({ message: "Conversation not found" });
+    if (!conversationId) {
+      return res.status(400).json({ message: "Conversation ID is required" });
     }
 
-    // Verify user is part of the conversation
-    if (!conversation.participants.includes(req.user.id)) {
-      return res.status(403).json({ message: "Not authorized" });
+    if (!text && !req.file) {
+      return res.status(400).json({ message: "Either text or image is required" });
     }
 
-    const message = new Message({
-      conversationId: req.params.conversationId,
-      sender: req.user.id,
-      text
-    });
+    const messageData = {
+      conversationId,
+      sender,
+      text: text || ""
+    };
 
-    await message.save();
+    if (req.file) {
+      messageData.image = {
+        url: req.file.path,
+        filename: req.file.filename
+      };
+    }
 
-    // Update conversation
-    conversation.lastMessage = text;
-    conversation.lastMessageTimestamp = new Date();
-    
-    // Update unread counts for other participants
-    conversation.participants.forEach(participantId => {
-      if (participantId.toString() !== req.user.id.toString()) {
-        const currentCount = conversation.unreadCounts.get(participantId.toString()) || 0;
-        conversation.unreadCounts.set(participantId.toString(), currentCount + 1);
+    const message = await Message.create(messageData);
+
+    // Update conversation's last message and unread counts
+    await Conversation.findByIdAndUpdate(
+      conversationId,
+      {
+        $set: { lastMessage: message._id, lastMessageAt: new Date() },
+        $inc: { [`unreadCounts.${req.user._id}`]: 0 }
       }
-    });
+    );
 
-    await conversation.save();
+    const populatedMessage = await Message.findById(message._id)
+      .populate("sender", "name email profilePic");
 
-    // Populate sender information
-    await message.populate("sender", "_id name");
-
-    res.status(201).json(message);
+    res.status(201).json(populatedMessage);
   } catch (error) {
     console.error("Error sending message:", error);
     res.status(500).json({ 

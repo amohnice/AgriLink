@@ -2,12 +2,18 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { fetchListings } from '../api/api';
+import { initiateMpesaPayment } from '../api/mpesa';
 import styles from '../styles/ListingDetails.module.css';
 
 function ListingDetails() {
   const [listing, setListing] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [phone, setPhone] = useState('');
+  const [quantity, setQuantity] = useState(1);
+  const [paymentLoading, setPaymentLoading] = useState(false);
+  const [paymentMessage, setPaymentMessage] = useState('');
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const { id } = useParams();
   const { user } = useAuth();
 
@@ -30,6 +36,46 @@ function ListingDetails() {
 
     fetchListing();
   }, [id]);
+
+  const handleQuantityChange = (e) => {
+    const value = parseInt(e.target.value);
+    if (value > 0 && value <= listing.quantity) {
+      setQuantity(value);
+    }
+  };
+
+  const calculateTotal = () => {
+    return listing.price * quantity;
+  };
+
+  const handlePayment = async () => {
+    if (!phone) {
+      setPaymentMessage("Please enter your M-Pesa phone number");
+      return;
+    }
+
+    if (quantity <= 0 || quantity > listing.quantity) {
+      setPaymentMessage("Invalid quantity selected");
+      return;
+    }
+
+    setPaymentLoading(true);
+    setPaymentMessage('');
+
+    try {
+      const totalAmount = calculateTotal();
+      const response = await initiateMpesaPayment(phone, totalAmount);
+      if (response && response.ResponseCode === "0") {
+        setPaymentMessage("Payment request sent. Please check your phone for the M-Pesa prompt.");
+      } else {
+        setPaymentMessage("Payment initiation failed. Please try again.");
+      }
+    } catch (error) {
+      setPaymentMessage("Failed to process payment. Please try again.");
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -108,17 +154,107 @@ function ListingDetails() {
           </div>
 
           {!isOwner && (
-            <div className={styles.contactSection}>
+            <div className={styles.actionButtons}>
               <Link
                 to={`/chat?seller=${listing.seller?._id}`}
                 className={`${styles.button} ${styles.contactButton}`}
               >
                 Contact Seller
               </Link>
+              <button
+                onClick={() => setShowPaymentModal(true)}
+                className={`${styles.button} ${styles.payButton}`}
+              >
+                Pay with M-Pesa
+              </button>
             </div>
           )}
         </div>
       </div>
+
+      {showPaymentModal && (
+        <div className={styles.modal}>
+          <div className={styles.modalContent}>
+            <h3>M-Pesa Payment</h3>
+            
+            <div className={styles.inputGroup}>
+              <label>Quantity (Available: {listing.quantity})</label>
+              <div className={styles.quantityControl}>
+                <button 
+                  type="button"
+                  onClick={() => quantity > 1 && setQuantity(q => q - 1)}
+                  className={styles.quantityButton}
+                >
+                  -
+                </button>
+                <input
+                  type="number"
+                  min="1"
+                  max={listing.quantity}
+                  value={quantity}
+                  onChange={handleQuantityChange}
+                  className={styles.quantityInput}
+                />
+                <button 
+                  type="button"
+                  onClick={() => quantity < listing.quantity && setQuantity(q => q + 1)}
+                  className={styles.quantityButton}
+                >
+                  +
+                </button>
+              </div>
+            </div>
+
+            <div className={styles.priceBreakdown}>
+              <div className={styles.priceRow}>
+                <span>Price per item:</span>
+                <span>KES {listing.price.toLocaleString()}</span>
+              </div>
+              <div className={styles.priceRow}>
+                <span>Quantity:</span>
+                <span>{quantity}</span>
+              </div>
+              <div className={`${styles.priceRow} ${styles.totalRow}`}>
+                <span>Total Amount:</span>
+                <span>KES {calculateTotal().toLocaleString()}</span>
+              </div>
+            </div>
+
+            <div className={styles.inputGroup}>
+              <label>M-Pesa Phone Number</label>
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="Enter your M-Pesa number"
+                className={styles.input}
+              />
+            </div>
+
+            {paymentMessage && (
+              <p className={`${styles.message} ${paymentMessage.includes('failed') ? styles.error : styles.success}`}>
+                {paymentMessage}
+              </p>
+            )}
+
+            <div className={styles.modalButtons}>
+              <button
+                onClick={handlePayment}
+                disabled={paymentLoading || quantity <= 0 || quantity > listing.quantity}
+                className={`${styles.button} ${styles.payButton}`}
+              >
+                {paymentLoading ? "Processing..." : `Pay KES ${calculateTotal().toLocaleString()}`}
+              </button>
+              <button
+                onClick={() => setShowPaymentModal(false)}
+                className={`${styles.button} ${styles.cancelButton}`}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

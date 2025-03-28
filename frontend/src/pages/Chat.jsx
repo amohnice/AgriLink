@@ -19,6 +19,7 @@ function Chat() {
   const socket = useSocket();
   const location = useLocation();
   const navigate = useNavigate();
+  const [selectedImage, setSelectedImage] = useState(null);
 
   // Handle seller parameter
   useEffect(() => {
@@ -177,15 +178,36 @@ function Chat() {
     }
   };
 
+  const handleImageSelect = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setSelectedImage(file);
+    }
+  };
+
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!newMessage.trim() || !selectedConversation) return;
+    if ((!newMessage.trim() && !selectedImage) || !selectedConversation) return;
 
     try {
-      const message = await sendMessage(selectedConversation.id, newMessage);
+      const formData = new FormData();
+      if (newMessage.trim()) {
+        formData.append('text', newMessage.trim());
+      }
+      if (selectedImage) {
+        formData.append('image', selectedImage);
+      }
+
+      const message = await sendMessage(selectedConversation.id, formData);
       socket.sendMessage(selectedConversation.id, message);
       setMessages(prev => [...prev, message]);
       setNewMessage('');
+      setSelectedImage(null);
+
+      // Reset file input
+      if (e.target.querySelector('input[type="file"]')) {
+        e.target.querySelector('input[type="file"]').value = '';
+      }
 
       // Update conversation in the list
       setConversations(prev => {
@@ -194,7 +216,7 @@ function Chat() {
         if (index !== -1) {
           updated[index] = {
             ...updated[index],
-            lastMessage: newMessage,
+            lastMessage: message.text || 'Sent an image',
             timestamp: new Date().toISOString()
           };
         }
@@ -260,12 +282,6 @@ function Chat() {
 
             <div className={styles.messageList}>
               {messages.map(message => {
-                console.log('Message data:', {
-                  messageId: message._id,
-                  senderId: message.sender?._id,
-                  currentUserId: user?._id,
-                  isSent: message.sender?._id?.toString() === user?._id?.toString()
-                });
                 const isSent = message.sender?._id?.toString() === user?._id?.toString();
                 return (
                   <div
@@ -273,7 +289,17 @@ function Chat() {
                     className={`${styles.message} ${isSent ? styles.sent : styles.received}`}
                   >
                     <div className={styles.messageContent}>
-                      <p>{message.text}</p>
+                      {message.text && <p>{message.text}</p>}
+                      {message.image && (
+                        <div className={styles.imageContainer}>
+                          <img 
+                            src={message.image.url} 
+                            alt="Message attachment" 
+                            className={styles.messageImage}
+                            onClick={() => window.open(message.image.url, '_blank')}
+                          />
+                        </div>
+                      )}
                       <span className={styles.timestamp}>
                         {new Date(message.createdAt).toLocaleTimeString()}
                       </span>
@@ -299,9 +325,19 @@ function Chat() {
                 placeholder="Type a message..."
                 className={styles.messageInput}
               />
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageSelect}
+                className={styles.imageInput}
+                id="imageInput"
+              />
+              <label htmlFor="imageInput" className={styles.imageButton}>
+                📎
+              </label>
               <button
                 type="submit"
-                disabled={!newMessage.trim()}
+                disabled={!newMessage.trim() && !selectedImage}
                 className={styles.sendButton}
               >
                 Send
