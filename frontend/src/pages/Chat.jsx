@@ -95,6 +95,12 @@ function Chat() {
     if (!socket) return;
 
     const handleNewMessage = ({ conversationId, message }) => {
+      console.log('Received new message:', {
+        conversationId,
+        message,
+        selectedConversationId: selectedConversation?.id
+      });
+      
       if (selectedConversation?.id === conversationId) {
         setMessages(prev => [...prev, message]);
       }
@@ -144,6 +150,15 @@ function Chat() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Add a check for user data
+  useEffect(() => {
+    if (!user) {
+      setError('User not authenticated');
+      return;
+    }
+    console.log('Current user:', user);
+  }, [user]);
 
   const handleMessageChange = (e) => {
     setNewMessage(e.target.value);
@@ -244,21 +259,28 @@ function Chat() {
             </div>
 
             <div className={styles.messageList}>
-              {messages.map(message => (
-                <div
-                  key={message._id}
-                  className={`${styles.message} ${
-                    message.sender === user.id ? styles.sent : styles.received
-                  }`}
-                >
-                  <div className={styles.messageContent}>
-                    <p>{message.text}</p>
-                    <span className={styles.timestamp}>
-                      {new Date(message.createdAt).toLocaleTimeString()}
-                    </span>
+              {messages.map(message => {
+                console.log('Message data:', {
+                  messageId: message._id,
+                  senderId: message.sender?._id,
+                  currentUserId: user?._id,
+                  isSent: message.sender?._id?.toString() === user?._id?.toString()
+                });
+                const isSent = message.sender?._id?.toString() === user?._id?.toString();
+                return (
+                  <div
+                    key={message._id}
+                    className={`${styles.message} ${isSent ? styles.sent : styles.received}`}
+                  >
+                    <div className={styles.messageContent}>
+                      <p>{message.text}</p>
+                      <span className={styles.timestamp}>
+                        {new Date(message.createdAt).toLocaleTimeString()}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
               {isTyping && (
                 <div className={`${styles.message} ${styles.received}`}>
                   <div className={`${styles.messageContent} ${styles.typing}`}>

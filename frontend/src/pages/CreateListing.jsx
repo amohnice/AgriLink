@@ -91,7 +91,7 @@ function CreateListing() {
       };
 
       await createListing(listingData);
-      navigate("/farmer-dashboard");
+      navigate("/farmer/dashboard");
     } catch (err) {
       setError(err.response?.data?.message || "Failed to create listing");
     } finally {

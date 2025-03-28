@@ -194,10 +194,23 @@ export const fetchMessages = async (conversationId) => {
 
 export const createConversation = async (participantId) => {
   try {
+    if (!participantId) {
+      throw new Error("Participant ID is required");
+    }
+    
+    console.log("Creating conversation with participant:", participantId);
     const response = await api.post("/api/chat/conversations", { participantId });
+    console.log("Conversation created successfully:", response.data);
     return response.data;
   } catch (error) {
-    throw error.response?.data || error.message;
+    console.error("Error creating conversation:", error.response?.data || error.message);
+    if (error.response?.data?.message) {
+      throw new Error(error.response.data.message);
+    }
+    if (error.response?.data?.error) {
+      throw new Error(error.response.data.error);
+    }
+    throw new Error("Failed to create conversation. Please try again.");
   }
 };
 

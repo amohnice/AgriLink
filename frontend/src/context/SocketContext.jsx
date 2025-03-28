@@ -39,7 +39,8 @@ export function SocketProvider({ children }) {
         reconnection: true,
         reconnectionAttempts: 5,
         reconnectionDelay: 1000,
-        timeout: 20000
+        timeout: 20000,
+        forceNew: true
       });
 
       currentSocket.on('connect', () => {

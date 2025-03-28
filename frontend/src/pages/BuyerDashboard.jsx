@@ -156,7 +156,7 @@ function BuyerDashboard() {
                 />
                 <div className={styles.listingInfo}>
                   <h3>{listing.title}</h3>
-                  <p>Price: ${listing.price}</p>
+                  <p>Price: KES {listing.price}</p>
                   <p>Quantity: {listing.quantity}</p>
                   <p>Seller: {listing.seller?.name}</p>
                   <div className={styles.actions}>
@@ -195,7 +195,7 @@ function BuyerDashboard() {
                 />
                 <div className={styles.listingInfo}>
                   <h3>{listing.title}</h3>
-                  <p>Price: ${listing.price}</p>
+                  <p>Price: KES {listing.price}</p>
                   <p>Quantity: {listing.quantity}</p>
                   <p>Seller: {listing.seller?.name}</p>
                   <div className={styles.actions}>
