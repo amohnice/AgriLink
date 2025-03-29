@@ -13,6 +13,8 @@ const aiRoutes = require("./routes/aiRoutes");
 const { trainModel } = require("./models/pricePredictionModel");
 const setupSocket = require("./socket");
 const chatRoutes = require("./routes/chatRoutes");
+const adminRoutes = require("./routes/adminRoutes");
+const messageRoutes = require('./routes/messageRoutes');
 
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
 
@@ -21,6 +23,11 @@ console.log("BLOCKCHAIN_RPC_URL:", process.env.BLOCKCHAIN_RPC_URL);
 const app = express();
 const server = http.createServer(app);
 
+// Initialize Socket.IO first
+const io = setupSocket(server);
+app.set('io', io); // Store io instance in app
+
+// Middleware
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 app.use(cors({
@@ -37,20 +44,22 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 connectDB();
 trainModel();
 
-// Initialize Socket.IO
-const io = setupSocket(server);
-
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/products", listingRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/ai", aiRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/messages", messageRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({ message: "Something went wrong!" });
+  res.status(500).json({ 
+    message: "Something went wrong!",
+    error: err.message 
+  });
 });
 
 const PORT = process.env.PORT || 5000;

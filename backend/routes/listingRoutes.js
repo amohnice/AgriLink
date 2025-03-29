@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { auth } = require('../middleware/auth');
+const { isAuthenticated } = require('../middleware/auth');
 const upload = require('../middleware/upload');
 const {
   createListing,
@@ -17,11 +17,11 @@ router.get('/', getAllListings);
 router.get('/recent', getRecentListings);
 
 // Protected routes
-router.get('/saved', auth, getSavedListings);
-router.post('/:id/save', auth, saveListing);
-router.delete('/:id/save', auth, removeSavedListing);
+router.get('/saved', isAuthenticated, getSavedListings);
+router.post('/:id/save', isAuthenticated, saveListing);
+router.delete('/:id/save', isAuthenticated, removeSavedListing);
 
 // Farmer-only routes
-router.post('/', auth, isFarmer, upload.array('images', 5), createListing);
+router.post('/', isAuthenticated, isFarmer, upload.array('images', 5), createListing);
 
 module.exports = router;

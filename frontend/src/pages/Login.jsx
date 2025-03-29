@@ -16,10 +16,24 @@ function Login() {
     try {
       setError("");
       setLoading(true);
-      await login(email, password);
-      navigate("/");
+      console.log("Submitting login form...");
+      const user = await login(email, password);
+      console.log("Login successful, user:", user);
+      
+      // Navigate based on user role
+      if (user.role === 'admin') {
+        console.log("Navigating to admin dashboard...");
+        navigate('/admin');
+      } else if (user.role === 'farmer') {
+        console.log("Navigating to farmer dashboard...");
+        navigate('/farmer/dashboard');
+      } else {
+        console.log("Navigating to buyer dashboard...");
+        navigate('/buyer/dashboard');
+      }
     } catch (err) {
-      setError("Failed to sign in. Please check your credentials.");
+      console.error("Login error:", err);
+      setError(err.message || "Failed to sign in. Please check your credentials.");
     } finally {
       setLoading(false);
     }

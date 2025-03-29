@@ -1,24 +1,47 @@
 import axios from "axios";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api"; // Backend URL
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
+// Create a single axios instance
 export const api = axios.create({
-  baseURL: API_URL,
-  headers: { "Content-Type": "application/json" },
+  baseURL: API_URL + "/api",
+  headers: {
+    "Content-Type": "application/json"
+  }
 });
 
-// Attach Token to Requests
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
-  if (token) config.headers.Authorization = `Bearer ${token}`;
+// Add a request interceptor
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      console.log("Adding token to request:", token);
+      config.headers.Authorization = `Bearer ${token}`;
+    }
   return config;
-});
+  },
+  (error) => {
+    console.error("Request interceptor error:", error);
+    return Promise.reject(error);
+  }
+);
 
 // Handle Token Expiration
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log("API Response:", response.data);
+    return response;
+  },
   (error) => {
-    if (error.response?.status === 401) {
+    console.error("API Error:", error.response?.data || error.message);
+    
+    // Only redirect to login if:
+    // 1. It's a 401 error
+    // 2. We're not already on the login page
+    // 3. It's not the login request itself
+    if (error.response?.status === 401 && 
+        !window.location.pathname.includes('/login') &&
+        !error.config.url.includes('/auth/login')) {
       console.warn("⚠ Token expired or unauthorized. Logging out...");
       localStorage.removeItem("token");
       window.location.href = "/login";
@@ -30,18 +53,18 @@ api.interceptors.response.use(
 // Fetch Products
 export const getProducts = async () => {
   try {
-    const response = await api.get("/api/products");
+    const response = await api.get("/products");
     return response.data;
   } catch (error) {
-    console.error("Error fetching products:", error.response?.data || error.message);
-    return [];
+    console.error("Error fetching listings:", error);
+    throw error;
   }
 };
 
 // Fetch Listings (using products endpoint)
 export const fetchListings = async () => {
   try {
-    const response = await api.get("/api/products");
+    const response = await api.get("/products");
     return response.data;
   } catch (error) {
     console.error("Error fetching listings:", error.response?.data || error.message);
@@ -52,103 +75,84 @@ export const fetchListings = async () => {
 // Create a new listing
 export const createListing = async (listingData) => {
   try {
-    const formData = new FormData();
-    
-    // Append all non-image fields
-    Object.keys(listingData).forEach(key => {
-      if (key !== 'images') {
-        formData.append(key, listingData[key]);
-      }
-    });
-
-    // Append images
-    if (listingData.images && listingData.images.length > 0) {
-      listingData.images.forEach(image => {
-        formData.append('images', image);
-      });
-    }
-
-    const response = await api.post('/api/products', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    const response = await api.post("/products", listingData);
     return response.data;
   } catch (error) {
-    console.error('Error creating listing:', error.response?.data || error.message);
-    if (error.response?.data?.message) {
-      throw new Error(error.response.data.message);
-    }
-    throw new Error('Failed to create listing. Please try again.');
+    console.error("Error creating listing:", error);
+    throw error;
   }
 };
 
 // Update Listing (Protected)
 export const updateListing = async (id, listingData) => {
   try {
-    const response = await api.put(`/api/products/${id}`, listingData);
+    const response = await api.put(`/products/${id}`, listingData);
     return response.data;
   } catch (error) {
-    console.error("Error updating listing:", error.response?.data || error.message);
-    return null;
+    console.error("Error updating listing:", error);
+    throw error;
   }
 };
 
 // Delete Listing (Protected)
 export const deleteListing = async (id) => {
   try {
-    const response = await api.delete(`/api/products/${id}`);
+    const response = await api.delete(`/products/${id}`);
     return response.data;
   } catch (error) {
-    console.error("Error deleting listing:", error.response?.data || error.message);
-    return null;
+    console.error("Error deleting listing:", error);
+    throw error;
   }
 };
 
-// User Authentication
+// Auth API functions
 export const registerUser = async (userData) => {
   try {
-    const response = await api.post("/api/auth/register", userData);
-    return response;
+    console.log("Registering user:", userData);
+    const response = await api.post('/auth/register', userData);
+    return response.data;
   } catch (error) {
-    const errorMessage = error.response?.data?.message || error.message;
-    console.error("Registration failed:", errorMessage);
-    const formattedError = new Error(errorMessage);
-    formattedError.response = error.response;
-    throw formattedError;
+    console.error("Registration error:", error.response?.data || error.message);
+    throw error.response?.data || { message: 'Registration failed' };
   }
 };
 
 export const loginUser = async (credentials) => {
   try {
-    const response = await api.post("/api/auth/login", credentials);
-    localStorage.setItem("token", response.data.token);
-    return response;
+    console.log("Logging in with:", credentials);
+    const response = await api.post('/auth/login', credentials);
+    console.log("Login response:", response.data);
+    
+    // Ensure we have the expected data structure
+    if (!response.data || !response.data.token) {
+      throw new Error('Invalid response from server');
+    }
+    
+    return response.data;
   } catch (error) {
-    console.error("Login failed:", error.response?.data || error.message);
-    throw error;
+    console.error("Login error:", error.response?.data || error.message);
+    throw error.response?.data || { message: 'Login failed' };
   }
 };
 
 export const logoutUser = async () => {
   try {
-    const response = await api.post("/api/auth/logout");
-    localStorage.removeItem("token");
+    const response = await api.post('/auth/logout');
     return response.data;
   } catch (error) {
-    console.error("Logout failed:", error.response?.data || error.message);
-    return null;
+    throw error.response?.data || { message: 'Logout failed' };
   }
 };
 
-// Get Current User
 export const getCurrentUser = async () => {
   try {
-    const response = await api.get("/api/auth/me");
+    console.log("Getting current user...");
+    const response = await api.get('/auth/me');
+    console.log("Current user response:", response.data);
     return response.data;
   } catch (error) {
-    console.error("Failed to get user data:", error.response?.data || error.message);
-    throw error;
+    console.error("Get current user error:", error.response?.data || error.message);
+    throw error.response?.data || { message: 'Failed to get user data' };
   }
 };
 
@@ -176,7 +180,7 @@ export const updateUserProfile = async (userId, userData) => {
 // Chat functions
 export const fetchConversations = async () => {
   try {
-    const response = await api.get("/api/chat/conversations");
+    const response = await api.get("/chat/conversations");
     return response.data;
   } catch (error) {
     throw error.response?.data || error.message;
@@ -185,7 +189,7 @@ export const fetchConversations = async () => {
 
 export const fetchMessages = async (conversationId) => {
   try {
-    const response = await api.get(`/api/chat/conversations/${conversationId}/messages`);
+    const response = await api.get(`/chat/conversations/${conversationId}/messages`);
     return response.data;
   } catch (error) {
     throw error.response?.data || error.message;
@@ -199,7 +203,7 @@ export const createConversation = async (participantId) => {
     }
     
     console.log("Creating conversation with participant:", participantId);
-    const response = await api.post("/api/chat/conversations", { participantId });
+    const response = await api.post("/chat/conversations", { participantId });
     console.log("Conversation created successfully:", response.data);
     return response.data;
   } catch (error) {
@@ -216,29 +220,102 @@ export const createConversation = async (participantId) => {
 
 export const sendMessage = async (conversationId, data) => {
   try {
-    const headers = {
-      Authorization: `Bearer ${localStorage.getItem("token")}`
-    };
+    console.log('Sending message with data:', {
+      conversationId,
+      dataType: data instanceof FormData ? 'FormData' : typeof data,
+      data: data instanceof FormData ? 'FormData object' : data
+    });
 
-    // If data is FormData (for image uploads), don't set Content-Type
-    // Let the browser set it automatically with the boundary
-    if (!(data instanceof FormData)) {
-      headers['Content-Type'] = 'application/json';
-      data = JSON.stringify({ conversationId, text: data });
+    let requestData;
+    let headers = {};
+
+    if (data instanceof FormData) {
+      // For image uploads
+      requestData = data;
+      // Don't set Content-Type for FormData, let browser set it with boundary
     } else {
-      // If it's FormData, make sure conversationId is included
-      data.append('conversationId', conversationId);
+      // For text messages
+      requestData = new FormData();
+      requestData.append('text', data);
     }
 
-    const response = await axios.post(
-      `${API_URL}/api/messages`,
-      data,
+    console.log('Making request with:', {
+      url: `/chat/conversations/${conversationId}/messages`,
+      method: 'POST',
+      headers,
+      data: requestData instanceof FormData ? 'FormData object' : requestData
+    });
+
+    const response = await api.post(
+      `/chat/conversations/${conversationId}/messages`,
+      requestData,
       { headers }
     );
 
+    console.log('Message sent successfully:', response.data);
+    return response;
+  } catch (error) {
+    console.error('Error sending message:', {
+      error: error.message,
+      response: error.response?.data,
+      status: error.response?.status,
+      headers: error.response?.headers
+    });
+    throw error;
+  }
+};
+
+// Admin API functions
+export const getDashboardStats = async () => {
+  try {
+    const response = await api.get('/admin/stats');
     return response.data;
   } catch (error) {
-    console.error('Error sending message:', error);
-    throw error;
+    throw error.response?.data || { message: 'Error fetching dashboard statistics' };
+  }
+};
+
+export const getAllUsers = async () => {
+  try {
+    const response = await api.get('/admin/users');
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Error fetching users' };
+  }
+};
+
+export const getPendingSellers = async () => {
+  try {
+    const response = await api.get('/admin/pending-sellers');
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Error fetching pending sellers' };
+  }
+};
+
+export const approveSeller = async (userId) => {
+  try {
+    const response = await api.put(`/admin/approve-seller/${userId}`);
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Error approving seller' };
+  }
+};
+
+export const suspendUser = async (userId) => {
+  try {
+    const response = await api.put(`/admin/suspend-user/${userId}`);
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Error suspending user' };
+  }
+};
+
+export const activateUser = async (userId) => {
+  try {
+    const response = await api.put(`/admin/activate-user/${userId}`);
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Error activating user' };
   }
 };

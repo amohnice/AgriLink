@@ -1,0 +1,147 @@
+.messagesContainer {
+  display: flex;
+  height: calc(100vh - 64px);
+  background-color: #f5f5f5;
+}
+
+.messagesList {
+  width: 300px;
+  border-right: 1px solid #ddd;
+  overflow-y: auto;
+  background-color: white;
+}
+
+.messageItem {
+  padding: 15px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.messageItem:hover {
+  background-color: #f8f8f8;
+}
+
+.messageItem.selected {
+  background-color: #e3f2fd;
+}
+
+.messageItem.unread {
+  background-color: #f0f7ff;
+  font-weight: 500;
+}
+
+.messageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.sender {
+  font-weight: 600;
+  color: #333;
+}
+
+.date {
+  font-size: 0.8em;
+  color: #666;
+}
+
+.messagePreview {
+  color: #666;
+  font-size: 0.9em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.messageDetail {
+  flex: 1;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  background-color: white;
+  margin: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.messageContent {
+  flex: 1;
+  padding: 20px 0;
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
+
+.messageActions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.actionButton {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.actionButton.delete {
+  background-color: #ffebee;
+  color: #d32f2f;
+}
+
+.actionButton.delete:hover {
+  background-color: #ffcdd2;
+}
+
+.actionButton.send {
+  background-color: #e3f2fd;
+  color: #1976d2;
+}
+
+.actionButton.send:hover {
+  background-color: #bbdefb;
+}
+
+.replySection {
+  margin-top: 20px;
+  border-top: 1px solid #eee;
+  padding-top: 20px;
+}
+
+.replyInput {
+  width: 100%;
+  min-height: 100px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin-bottom: 10px;
+  resize: vertical;
+}
+
+.replyInput:focus {
+  outline: none;
+  border-color: #1976d2;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  font-size: 1.2em;
+  color: #666;
+}
+
+.error {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  color: #d32f2f;
+  font-size: 1.2em;
+} 

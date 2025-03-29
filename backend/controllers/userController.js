@@ -48,24 +48,23 @@ const registerUser = async (req, res) => {
     const user = await User.create({
       name: String(name),
       email: String(email),
-      password: await bcrypt.hash(password, 10),
-      role: role || 'buyer'
+      password: String(password),
+      role: role || 'buyer' // Default to buyer if no role specified
     });
 
-    if (user) {
-      res.status(201).json({
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        token: generateToken(user._id)
-      });
-    } else {
-      res.status(400).json({ message: "Invalid user data" });
-    }
+    // Generate token
+    const token = generateToken(user._id);
+
+    res.status(201).json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      token
+    });
   } catch (error) {
-    console.error("Registration error:", error);
-    res.status(500).json({ message: "Server error during registration" });
+    console.error('Registration error:', error);
+    res.status(500).json({ message: "Error creating user" });
   }
 };
 
@@ -75,13 +74,7 @@ const loginUser = async (req, res) => {
 
     // Validate required fields
     if (!email || !password) {
-      return res.status(400).json({ 
-        message: "Please provide email and password",
-        missing: {
-          email: !email,
-          password: !password
-        }
-      });
+      return res.status(400).json({ message: "Please provide email and password" });
     }
 
     // Find user
@@ -96,16 +89,19 @@ const loginUser = async (req, res) => {
       return res.status(401).json({ message: "Invalid email or password" });
     }
 
+    // Generate token
+    const token = generateToken(user._id);
+
     res.json({
       _id: user._id,
       name: user.name,
       email: user.email,
       role: user.role,
-      token: generateToken(user._id)
+      token
     });
   } catch (error) {
-    console.error("Login error:", error);
-    res.status(500).json({ message: "Server error during login" });
+    console.error('Login error:', error);
+    res.status(500).json({ message: "Error logging in" });
   }
 };
 
@@ -117,8 +113,8 @@ const getUserById = async (req, res) => {
     }
     res.json(user);
   } catch (error) {
-    console.error("Error fetching user:", error);
-    res.status(500).json({ message: "Server error while fetching user" });
+    console.error('Get user error:', error);
+    res.status(500).json({ message: "Error fetching user" });
   }
 };
 
@@ -133,22 +129,19 @@ const updateUser = async (req, res) => {
     user.name = req.body.name || user.name;
     user.email = req.body.email || user.email;
     if (req.body.password) {
-      user.password = await bcrypt.hash(req.body.password, 10);
+      user.password = req.body.password;
     }
-    user.role = req.body.role || user.role;
-    user.location = req.body.location || user.location;
 
     const updatedUser = await user.save();
     res.json({
       _id: updatedUser._id,
       name: updatedUser.name,
       email: updatedUser.email,
-      role: updatedUser.role,
-      location: updatedUser.location
+      role: updatedUser.role
     });
   } catch (error) {
-    console.error("Error updating user:", error);
-    res.status(500).json({ message: "Server error while updating user" });
+    console.error('Update user error:', error);
+    res.status(500).json({ message: "Error updating user" });
   }
 };
 

@@ -19,7 +19,9 @@ export function AuthProvider({ children }) {
 
   const fetchUserProfile = async () => {
     try {
+      console.log("Fetching user profile...");
       const userData = await getCurrentUser();
+      console.log("User profile data:", userData);
       if (userData) {
         setUser(userData);
       } else {
@@ -36,18 +38,19 @@ export function AuthProvider({ children }) {
 
   const loginUser = async (email, password) => {
     try {
+      console.log("Attempting login with:", email);
       const credentials = {
         email: String(email),
         password: String(password)
       };
       
       const response = await login(credentials);
+      console.log("Login response:", response);
       
-      // The response is already the data object from the API call
-      const { token, user } = response;
-      localStorage.setItem("token", token);
-      setUser(user);
-      return user;
+      // The response contains the user data and token directly
+      localStorage.setItem("token", response.token);
+      setUser(response);
+      return response;
     } catch (error) {
       console.error('Login error:', error);
       throw error;
@@ -64,13 +67,13 @@ export function AuthProvider({ children }) {
       };
       const response = await register(userData);
       
-      if (!response || !response.token || !response.user) {
+      if (!response || !response.token) {
         throw new Error('Invalid response from server');
       }
       
       localStorage.setItem("token", response.token);
-      setUser(response.user);
-      return response.user;
+      setUser(response);
+      return response;
     } catch (error) {
       console.error('Registration error:', error);
       throw error;

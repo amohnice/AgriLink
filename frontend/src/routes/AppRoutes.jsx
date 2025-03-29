@@ -12,6 +12,8 @@ import Chat from '../pages/Chat';
 import ListingDetails from '../pages/ListingDetails';
 import EditProfile from '../pages/EditProfile';
 import Settings from '../pages/Settings';
+import AdminDashboard from '../pages/admin/AdminDashboard';
+import Messages from '../pages/Messages';
 
 function ProtectedRoute({ children }) {
   const { user } = useAuth();
@@ -26,6 +28,20 @@ function FarmerRoute({ children }) {
   return children;
 }
 
+function BuyerRoute({ children }) {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/login" />;
+  if (user.role !== 'buyer') return <Navigate to="/dashboard" />;
+  return children;
+}
+
+function AdminRoute({ children }) {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/login" />;
+  if (user.role !== 'admin') return <Navigate to="/dashboard" />;
+  return children;
+}
+
 function RoleBasedRedirect() {
   const { user } = useAuth();
   if (!user) return <Navigate to="/login" />;
@@ -35,35 +51,14 @@ function RoleBasedRedirect() {
 function AppRoutes() {
   return (
     <Routes>
+      {/* Public routes */}
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/listings" element={<Listings />} />
       <Route path="/listings/:id" element={<ListingDetails />} />
-      <Route
-        path="/create-listing"
-        element={
-          <FarmerRoute>
-            <CreateListing />
-          </FarmerRoute>
-        }
-      />
-      <Route
-        path="/farmer/dashboard"
-        element={
-          <FarmerRoute>
-            <FarmerDashboard />
-          </FarmerRoute>
-        }
-      />
-      <Route
-        path="/buyer/dashboard"
-        element={
-          <ProtectedRoute>
-            <BuyerDashboard />
-          </ProtectedRoute>
-        }
-      />
+      
+      {/* Protected routes accessible to all authenticated users */}
       <Route
         path="/profile"
         element={
@@ -96,7 +91,52 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/messages"
+        element={
+          <ProtectedRoute>
+            <Messages />
+          </ProtectedRoute>
+        }
+      />
+      
+      {/* Dashboard redirect */}
       <Route path="/dashboard" element={<RoleBasedRedirect />} />
+      
+      {/* Admin routes */}
+      <Route
+        path="/admin/*"
+        element={
+          <AdminRoute>
+            <AdminDashboard />
+          </AdminRoute>
+        }
+      />
+      
+      {/* Farmer routes */}
+      <Route
+        path="/farmer/*"
+        element={
+          <FarmerRoute>
+            <Routes>
+              <Route path="/dashboard" element={<FarmerDashboard />} />
+              <Route path="/create-listing" element={<CreateListing />} />
+            </Routes>
+          </FarmerRoute>
+        }
+      />
+      
+      {/* Buyer routes */}
+      <Route
+        path="/buyer/*"
+        element={
+          <BuyerRoute>
+            <Routes>
+              <Route path="/dashboard" element={<BuyerDashboard />} />
+            </Routes>
+          </BuyerRoute>
+        }
+      />
     </Routes>
   );
 }

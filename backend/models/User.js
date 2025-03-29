@@ -21,7 +21,7 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ["farmer", "buyer"],
+      enum: ["farmer", "buyer", "admin"],
       default: "buyer",
     },
     location: {
@@ -31,6 +31,26 @@ const userSchema = new mongoose.Schema(
     phone: {
       type: String,
       trim: true,
+    },
+    isApproved: {
+      type: Boolean,
+      default: function() {
+        return this.role !== 'farmer'; // Auto-approve non-farmers
+      }
+    },
+    approvedAt: {
+      type: Date,
+      default: null
+    },
+    approvedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null
+    },
+    status: {
+      type: String,
+      enum: ['active', 'suspended', 'pending'],
+      default: 'active'
     },
     savedListings: [{
       type: mongoose.Schema.Types.ObjectId,

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { fetchConversations, fetchMessages, sendMessage, createConversation } from '../api/api';
+import { api, sendMessage } from '../api/api';
 import styles from '../styles/Chat.module.css';
 
 function Chat() {
@@ -21,6 +21,46 @@ function Chat() {
   const navigate = useNavigate();
   const [selectedImage, setSelectedImage] = useState(null);
 
+  // Load conversations
+  useEffect(() => {
+    const loadConversations = async () => {
+      try {
+        const response = await api.get('/chat/conversations');
+        console.log('Loaded conversations:', response.data); // Debug log
+        
+        // Ensure each conversation has required fields and normalize the ID field
+        const validConversations = response.data.filter(conv => {
+          if (!conv || (!conv._id && !conv.id)) {
+            console.error('Invalid conversation:', conv);
+            return false;
+          }
+          return true;
+        }).map(conv => ({
+          ...conv,
+          _id: conv._id || conv.id // Normalize to _id
+        }));
+        
+        console.log('Valid conversations:', validConversations);
+        setConversations(validConversations);
+        
+        // If we have conversations but none selected, select the first one
+        if (validConversations.length > 0 && (!selectedConversation || !selectedConversation._id)) {
+          console.log('Selecting first conversation:', validConversations[0]);
+          setSelectedConversation(validConversations[0]);
+        }
+      } catch (err) {
+        console.error('Error loading conversations:', err);
+        setError(err.response?.data?.message || 'Failed to load conversations');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (user) {
+      loadConversations();
+    }
+  }, [user]);
+
   // Handle seller parameter
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -30,23 +70,37 @@ function Chat() {
       const initializeConversation = async () => {
         try {
           // Create or get existing conversation
-          const conversation = await createConversation(sellerId);
+          const response = await api.post('/chat/conversations', { participantId: sellerId });
+          const conversation = response.data;
+          
+          console.log('Created/Found conversation:', conversation);
+          
+          if (!conversation || (!conversation._id && !conversation.id)) {
+            throw new Error('Invalid conversation data received');
+          }
+          
+          // Normalize the conversation object
+          const normalizedConversation = {
+            ...conversation,
+            _id: conversation._id || conversation.id
+          };
           
           // Add conversation to list if not exists
           setConversations(prev => {
-            if (!prev.find(conv => conv.id === conversation.id)) {
-              return [conversation, ...prev];
+            if (!prev.find(conv => conv._id === normalizedConversation._id)) {
+              return [normalizedConversation, ...prev];
             }
             return prev;
           });
           
           // Select the conversation
-          setSelectedConversation(conversation);
+          setSelectedConversation(normalizedConversation);
           
           // Remove the seller parameter from URL
           navigate('/chat', { replace: true });
         } catch (err) {
-          setError('Failed to start conversation with seller');
+          console.error('Error initializing conversation:', err);
+          setError(err.response?.data?.message || 'Failed to start conversation with seller');
         }
       };
 
@@ -54,68 +108,43 @@ function Chat() {
     }
   }, [location.search, user, navigate]);
 
-  // Fetch conversations
+  // Load messages for selected conversation
   useEffect(() => {
-    const loadConversations = async () => {
+    const loadMessages = async () => {
+      if (!selectedConversation) return;
+
       try {
-        const data = await fetchConversations();
-        setConversations(data);
-        setLoading(false);
+        const response = await api.get(`/chat/conversations/${selectedConversation._id}/messages`);
+        console.log('Loaded messages:', response.data); // Debug log
+        setMessages(response.data);
       } catch (err) {
-        setError('Failed to load conversations');
-        setLoading(false);
+        console.error('Error loading messages:', err);
+        setError(err.response?.data?.message || 'Failed to load messages');
       }
     };
 
-    loadConversations();
-  }, []);
-
-  // Fetch messages when conversation is selected
-  useEffect(() => {
-    if (selectedConversation) {
-      const loadMessages = async () => {
-        try {
-          const data = await fetchMessages(selectedConversation.id);
-          setMessages(data);
-        } catch (err) {
-          setError('Failed to load messages');
-        }
-      };
-
-      loadMessages();
-      socket.joinConversation(selectedConversation.id);
-
-      return () => {
-        socket.leaveConversation(selectedConversation.id);
-      };
-    }
-  }, [selectedConversation, socket]);
+    loadMessages();
+  }, [selectedConversation]);
 
   // Handle real-time message updates
   useEffect(() => {
     if (!socket) return;
 
     const handleNewMessage = ({ conversationId, message }) => {
-      console.log('Received new message:', {
-        conversationId,
-        message,
-        selectedConversationId: selectedConversation?.id
-      });
-      
-      if (selectedConversation?.id === conversationId) {
+      if (selectedConversation?._id === conversationId) {
         setMessages(prev => [...prev, message]);
       }
 
       // Update conversation list
       setConversations(prev => {
         const updated = [...prev];
-        const index = updated.findIndex(conv => conv.id === conversationId);
+        const index = updated.findIndex(conv => conv._id === conversationId);
         if (index !== -1) {
           updated[index] = {
             ...updated[index],
-            lastMessage: message.text,
+            lastMessage: message.text || 'Sent an image',
             timestamp: message.createdAt,
-            unread: selectedConversation?.id !== conversationId 
+            unread: selectedConversation?._id !== conversationId 
               ? (updated[index].unread || 0) + 1 
               : 0
           };
@@ -124,26 +153,10 @@ function Chat() {
       });
     };
 
-    const handleTyping = ({ userId }) => {
-      if (selectedConversation?.participant.id === userId) {
-        setIsTyping(true);
-      }
-    };
-
-    const handleStopTyping = ({ userId }) => {
-      if (selectedConversation?.participant.id === userId) {
-        setIsTyping(false);
-      }
-    };
-
     socket.on('message received', handleNewMessage);
-    socket.on('user typing', handleTyping);
-    socket.on('user stop typing', handleStopTyping);
 
     return () => {
       socket.off('message received', handleNewMessage);
-      socket.off('user typing', handleTyping);
-      socket.off('user stop typing', handleStopTyping);
     };
   }, [socket, selectedConversation]);
 
@@ -152,30 +165,8 @@ function Chat() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Add a check for user data
-  useEffect(() => {
-    if (!user) {
-      setError('User not authenticated');
-      return;
-    }
-    console.log('Current user:', user);
-  }, [user]);
-
   const handleMessageChange = (e) => {
     setNewMessage(e.target.value);
-
-    // Handle typing indicator
-    if (selectedConversation) {
-      if (typingTimeout) clearTimeout(typingTimeout);
-
-      socket.startTyping(selectedConversation.id);
-      
-      const timeout = setTimeout(() => {
-        socket.stopTyping(selectedConversation.id);
-      }, 3000);
-      
-      setTypingTimeout(timeout);
-    }
   };
 
   const handleImageSelect = (e) => {
@@ -187,19 +178,48 @@ function Chat() {
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if ((!newMessage.trim() && !selectedImage) || !selectedConversation) return;
+    
+    // Validate conversation exists and has an ID
+    if (!selectedConversation || !selectedConversation._id) {
+      console.error('No valid conversation selected:', selectedConversation);
+      setError('Please select a conversation first');
+      return;
+    }
+
+    // Validate message content
+    if (!newMessage.trim() && !selectedImage) {
+      console.error('No message content');
+      return;
+    }
 
     try {
-      const formData = new FormData();
-      if (newMessage.trim()) {
-        formData.append('text', newMessage.trim());
-      }
+      let messageData;
       if (selectedImage) {
+        const formData = new FormData();
         formData.append('image', selectedImage);
+        if (newMessage.trim()) {
+          formData.append('text', newMessage.trim());
+        }
+        messageData = formData;
+      } else {
+        messageData = newMessage.trim();
       }
 
-      const message = await sendMessage(selectedConversation.id, formData);
-      socket.sendMessage(selectedConversation.id, message);
+      console.log('Sending message to conversation:', {
+        conversationId: selectedConversation._id,
+        messageData: messageData instanceof FormData ? 'FormData object' : messageData
+      });
+
+      const response = await sendMessage(selectedConversation._id, messageData);
+      
+      if (!response.data) {
+        throw new Error('No data received from server');
+      }
+
+      const message = response.data;
+      console.log('Message sent successfully:', message);
+      
+      // Update messages immediately
       setMessages(prev => [...prev, message]);
       setNewMessage('');
       setSelectedImage(null);
@@ -212,7 +232,7 @@ function Chat() {
       // Update conversation in the list
       setConversations(prev => {
         const updated = [...prev];
-        const index = updated.findIndex(conv => conv.id === selectedConversation.id);
+        const index = updated.findIndex(conv => conv._id === selectedConversation._id);
         if (index !== -1) {
           updated[index] = {
             ...updated[index],
@@ -223,7 +243,14 @@ function Chat() {
         return updated;
       });
     } catch (err) {
-      setError('Failed to send message');
+      console.error('Error sending message:', {
+        error: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+        conversationId: selectedConversation._id,
+        selectedConversation
+      });
+      setError(err.response?.data?.message || 'Failed to send message');
     }
   };
 
@@ -250,17 +277,17 @@ function Chat() {
           <h2>Messages</h2>
         </div>
         <div className={styles.conversationList}>
-          {conversations.map(conversation => (
+          {Array.isArray(conversations) && conversations.map((conversation, index) => (
             <div
-              key={conversation.id}
+              key={conversation._id || `conv-${index}`}
               className={`${styles.conversationItem} ${
-                selectedConversation?.id === conversation.id ? styles.active : ''
+                selectedConversation?._id === conversation._id ? styles.active : ''
               }`}
               onClick={() => setSelectedConversation(conversation)}
             >
               <div className={styles.conversationInfo}>
-                <h3>{conversation.participant.name}</h3>
-                <p>{conversation.lastMessage}</p>
+                <h3>{conversation.participant?.name || 'Unknown User'}</h3>
+                <p>{conversation.lastMessage || 'No messages yet'}</p>
               </div>
               {conversation.unread > 0 && (
                 <span className={styles.unreadBadge}>{conversation.unread}</span>
@@ -274,18 +301,18 @@ function Chat() {
         {selectedConversation ? (
           <>
             <div className={styles.chatHeader}>
-              <h2>{selectedConversation.participant.name}</h2>
+              <h2>{selectedConversation.participant?.name || 'Unknown User'}</h2>
               <span className={styles.participantRole}>
-                {selectedConversation.participant.role}
+                {selectedConversation.participant?.role || 'User'}
               </span>
             </div>
 
             <div className={styles.messageList}>
-              {messages.map(message => {
-                const isSent = message.sender?._id?.toString() === user?._id?.toString();
+              {Array.isArray(messages) && messages.map((message, index) => {
+                const isSent = message.sender?._id === user?._id;
                 return (
                   <div
-                    key={message._id}
+                    key={message._id || `msg-${index}`}
                     className={`${styles.message} ${isSent ? styles.sent : styles.received}`}
                   >
                     <div className={styles.messageContent}>
@@ -307,13 +334,6 @@ function Chat() {
                   </div>
                 );
               })}
-              {isTyping && (
-                <div className={`${styles.message} ${styles.received}`}>
-                  <div className={`${styles.messageContent} ${styles.typing}`}>
-                    <span>typing...</span>
-                  </div>
-                </div>
-              )}
               <div ref={messagesEndRef} />
             </div>
 

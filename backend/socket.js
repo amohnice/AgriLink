@@ -1,7 +1,7 @@
 const { Server } = require("socket.io");
 const jwt = require("jsonwebtoken");
 
-function initializeSocket(server) {
+function setupSocket(server) {
   const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
 
   const io = new Server(server, {
@@ -15,10 +15,39 @@ function initializeSocket(server) {
     transports: ["websocket", "polling"]
   });
 
-  // Create a namespace for chat with /api prefix
+  // Add authentication middleware to main namespace
+  io.use(async (socket, next) => {
+    try {
+      const token = socket.handshake.auth.token;
+      if (!token) {
+        return next(new Error("Authentication error: No token provided"));
+      }
+
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      socket.userId = decoded.id;
+      next();
+    } catch (err) {
+      console.error("Socket authentication error:", err.message);
+      next(new Error("Authentication error: Invalid token"));
+    }
+  });
+
+  // Handle main namespace connections
+  io.on("connection", (socket) => {
+    console.log("User connected:", socket.userId);
+
+    // Join user's room
+    socket.join(socket.userId);
+
+    socket.on("disconnect", () => {
+      console.log("User disconnected:", socket.userId);
+    });
+  });
+
+  // Create a namespace for chat
   const chatNamespace = io.of("/api/chat");
 
-  // Add authentication middleware
+  // Add authentication middleware to chat namespace
   chatNamespace.use(async (socket, next) => {
     try {
       const token = socket.handshake.auth.token;
@@ -86,4 +115,4 @@ function initializeSocket(server) {
   return io;
 }
 
-module.exports = initializeSocket;
+module.exports = setupSocket;

@@ -3,24 +3,24 @@ const router = express.Router();
 const Conversation = require("../models/Conversation");
 const Message = require("../models/Message");
 const User = require("../models/User");
-const { auth } = require("../middleware/auth");
+const { isAuthenticated } = require("../middleware/auth");
 const mongoose = require("mongoose");
 const multer = require("multer");
 const { storage } = require("../config/cloudinary");
 const upload = multer({ storage });
 
 // Get all conversations for the current user
-router.get("/conversations", auth, async (req, res) => {
+router.get("/conversations", isAuthenticated, async (req, res) => {
   try {
     const conversations = await Conversation.find({
-      participants: req.user.id
+      participants: req.user._id
     })
     .populate("participants", "name role")
     .sort({ lastMessageTimestamp: -1 });
 
     const formattedConversations = conversations.map(conv => {
       const otherParticipant = conv.participants.find(
-        p => p._id.toString() !== req.user.id.toString()
+        p => p._id.toString() !== req.user._id.toString()
       );
       return {
         id: conv._id,
@@ -31,7 +31,7 @@ router.get("/conversations", auth, async (req, res) => {
         },
         lastMessage: conv.lastMessage || "",
         timestamp: conv.lastMessageTimestamp,
-        unread: conv.unreadCounts.get(req.user.id.toString()) || 0
+        unread: conv.unreadCounts.get(req.user._id.toString()) || 0
       };
     });
 
@@ -46,164 +46,140 @@ router.get("/conversations", auth, async (req, res) => {
 });
 
 // Get messages for a specific conversation
-router.get("/conversations/:conversationId/messages", auth, async (req, res) => {
+router.get("/conversations/:conversationId/messages", isAuthenticated, async (req, res) => {
   try {
-    const conversation = await Conversation.findById(req.params.conversationId);
-    if (!conversation) {
-      return res.status(404).json({ message: "Conversation not found" });
-    }
-
-    // Verify user is part of the conversation
-    if (!conversation.participants.includes(req.user.id)) {
-      return res.status(403).json({ message: "Not authorized" });
-    }
-
-    const messages = await Message.find({ conversationId: req.params.conversationId })
-      .sort({ createdAt: 1 })
-      .populate("sender", "name");
+    const messages = await Message.find({
+      conversationId: req.params.conversationId
+    })
+    .populate("sender", "name role")
+    .sort({ createdAt: 1 });
 
     res.json(messages);
   } catch (error) {
     console.error("Error fetching messages:", error);
-    res.status(500).json({ 
-      message: "Error fetching messages",
-      error: error.message
-    });
+    res.status(500).json({ message: "Error fetching messages" });
   }
 });
 
 // Create a new conversation
-router.post("/conversations", auth, async (req, res) => {
+router.post("/conversations", isAuthenticated, async (req, res) => {
   try {
     const { participantId } = req.body;
-    
-    console.log("Creating conversation request:", {
-      currentUserId: req.user.id,
-      participantId
-    });
-    
-    // Validate participantId
-    if (!participantId) {
-      return res.status(400).json({ message: "Participant ID is required" });
-    }
 
-    // Validate if participantId is a valid MongoDB ObjectId
-    if (!mongoose.Types.ObjectId.isValid(participantId)) {
-      return res.status(400).json({ message: "Invalid participant ID" });
-    }
-
-    // Check if participant exists
-    const participant = await User.findById(participantId);
-    if (!participant) {
-      return res.status(404).json({ message: "Participant not found" });
-    }
-
-    // Convert participantId to ObjectId
-    const participantObjectId = new mongoose.Types.ObjectId(participantId);
-    const currentUserId = new mongoose.Types.ObjectId(req.user.id);
-
-    // Prevent self-conversation
-    if (participantObjectId.equals(currentUserId)) {
-      return res.status(400).json({ message: "Cannot create conversation with yourself" });
-    }
-
-    // Create or find conversation using the static method
-    console.log("Creating conversation with participants:", {
-      currentUserId: currentUserId.toString(),
-      participantId: participantObjectId.toString()
+    // Check if conversation already exists
+    const existingConversation = await Conversation.findOne({
+      participants: { $all: [req.user._id, participantId] }
     });
 
-    const conversation = await Conversation.createConversation(currentUserId, participantObjectId);
-    
-    if (!conversation) {
-      return res.status(500).json({ message: "Failed to create or find conversation" });
+    if (existingConversation) {
+      return res.json(existingConversation);
     }
 
-    console.log("Conversation created/found:", conversation._id);
+    // Create new conversation
+    const conversation = await Conversation.create({
+      participants: [req.user._id, participantId],
+      lastMessage: "",
+      lastMessageTimestamp: new Date(),
+      unreadCounts: new Map([
+        [req.user._id.toString(), 0],
+        [participantId, 0]
+      ])
+    });
 
-    // Populate participant information
-    await conversation.populate("participants", "name role");
-
-    const otherParticipant = conversation.participants.find(
-      p => !p._id.equals(currentUserId)
-    );
-
-    if (!otherParticipant) {
-      return res.status(500).json({ message: "Failed to find other participant" });
-    }
-
-    const response = {
-      id: conversation._id,
-      participant: {
-        id: otherParticipant._id,
-        name: otherParticipant.name,
-        role: otherParticipant.role
-      },
-      lastMessage: conversation.lastMessage || "",
-      timestamp: conversation.lastMessageTimestamp || new Date(),
-      unread: 0
-    };
-
-    console.log("Sending response:", response);
-    res.status(201).json(response);
+    res.status(201).json(conversation);
   } catch (error) {
     console.error("Error creating conversation:", error);
-    res.status(500).json({ 
-      message: "Error creating conversation",
-      error: error.message,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
-    });
+    res.status(500).json({ message: "Error creating conversation" });
   }
 });
 
 // Send a message
-router.post("/messages", auth, upload.single("image"), async (req, res) => {
+router.post("/conversations/:conversationId/messages", isAuthenticated, upload.single("image"), async (req, res) => {
   try {
-    const { conversationId, text } = req.body;
-    const sender = req.user._id;
+    const { text } = req.body;
+    const conversationId = req.params.conversationId;
 
-    if (!conversationId) {
-      return res.status(400).json({ message: "Conversation ID is required" });
-    }
-
+    // Validate that either text or image is provided
     if (!text && !req.file) {
-      return res.status(400).json({ message: "Either text or image is required" });
+      return res.status(400).json({ message: "Message must contain either text or an image" });
     }
 
-    const messageData = {
-      conversationId,
-      sender,
-      text: text || ""
-    };
-
-    if (req.file) {
-      messageData.image = {
-        url: req.file.path,
-        filename: req.file.filename
-      };
+    // Get the conversation to find the recipient
+    const conversation = await Conversation.findById(conversationId);
+    if (!conversation) {
+      return res.status(404).json({ message: "Conversation not found" });
     }
 
-    const message = await Message.create(messageData);
-
-    // Update conversation's last message and unread counts
-    await Conversation.findByIdAndUpdate(
-      conversationId,
-      {
-        $set: { lastMessage: message._id, lastMessageAt: new Date() },
-        $inc: { [`unreadCounts.${req.user._id}`]: 0 }
-      }
+    // Find the recipient (the other participant)
+    const recipient = conversation.participants.find(
+      p => p.toString() !== req.user._id.toString()
     );
 
-    const populatedMessage = await Message.findById(message._id)
-      .populate("sender", "name email profilePic");
+    // Create message
+    const message = await Message.create({
+      conversationId,
+      sender: req.user._id,
+      text: text || "",
+      image: req.file ? {
+        url: req.file.path,
+        filename: req.file.filename
+      } : undefined
+    });
 
-    res.status(201).json(populatedMessage);
+    // Update conversation
+    await Conversation.findByIdAndUpdate(conversationId, {
+      lastMessage: text || "Image message",
+      lastMessageTimestamp: new Date(),
+      $inc: {
+        [`unreadCounts.${recipient}`]: 1
+      }
+    });
+
+    // Populate sender information
+    await message.populate("sender", "name role");
+
+    // Emit socket event for real-time updates
+    req.app.get('io').to(recipient.toString()).emit('message received', {
+      conversationId,
+      message
+    });
+
+    res.status(201).json(message);
   } catch (error) {
     console.error("Error sending message:", error);
     res.status(500).json({ 
       message: "Error sending message",
-      error: error.message
+      error: error.message 
     });
+  }
+});
+
+// Mark messages as read
+router.put("/conversations/:conversationId/read", isAuthenticated, async (req, res) => {
+  try {
+    const conversationId = req.params.conversationId;
+
+    // Update unread count for the current user
+    await Conversation.findByIdAndUpdate(conversationId, {
+      $set: {
+        [`unreadCounts.${req.user._id}`]: 0
+      }
+    });
+
+    // Mark messages as read
+    await Message.updateMany(
+      {
+        conversationId,
+        sender: { $ne: req.user._id },
+        read: false
+      },
+      { read: true }
+    );
+
+    res.json({ message: "Messages marked as read" });
+  } catch (error) {
+    console.error("Error marking messages as read:", error);
+    res.status(500).json({ message: "Error marking messages as read" });
   }
 });
 
