@@ -7,7 +7,7 @@ const http = require("http");
 const path = require("path");
 const connectDB = require("./config/db");
 const userRoutes = require("./routes/userRoutes");
-const listingRoutes = require("./routes/listingRoutes");
+const productRoutes = require("./routes/productRoutes");
 const authRoutes = require("./routes/authRoutes");
 const aiRoutes = require("./routes/aiRoutes");
 const { trainModel } = require("./models/pricePredictionModel");
@@ -47,7 +47,7 @@ trainModel();
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
-app.use("/api/products", listingRoutes);
+app.use("/api/products", productRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/admin", adminRoutes);

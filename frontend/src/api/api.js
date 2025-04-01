@@ -86,10 +86,47 @@ export const createListing = async (listingData) => {
 // Update Listing (Protected)
 export const updateListing = async (id, listingData) => {
   try {
-    const response = await api.put(`/products/${id}`, listingData);
+    // Ensure ID is properly formatted
+    const listingId = id.toString().trim();
+    
+    // Remove _id from the data if it exists
+    const { _id, ...dataToSend } = listingData;
+    
+    console.log('Update Listing Request Details:', {
+      id: listingId,
+      data: JSON.stringify(dataToSend, null, 2),
+      url: `/products/${listingId}`,
+      method: 'PUT'
+    });
+    
+    // Ensure all required fields are present and properly formatted
+    const formattedData = {
+      ...dataToSend,
+      price: Number(dataToSend.price),
+      quantity: Number(dataToSend.quantity),
+      seller: dataToSend.seller.toString() // Ensure seller ID is a string
+    };
+
+    const response = await api.put(`/products/${listingId}`, formattedData);
+    console.log('Update response:', response.data);
     return response.data;
   } catch (error) {
-    console.error("Error updating listing:", error);
+    console.error('Error updating listing:', {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status,
+      url: error.config?.url,
+      method: error.config?.method,
+      data: error.config?.data,
+      headers: error.config?.headers
+    });
+    
+    if (error.response?.status === 404) {
+      throw new Error('Listing not found');
+    }
+    if (error.response?.status === 403) {
+      throw new Error('You are not authorized to edit this listing');
+    }
     throw error;
   }
 };
@@ -159,7 +196,7 @@ export const getCurrentUser = async () => {
 // User Profile APIs
 export const getUserProfile = async (userId) => {
   try {
-    const response = await api.get(`/api/users/${userId}`);
+    const response = await api.get(`/users/${userId}`);
     return response.data;
   } catch (error) {
     console.error("Failed to get user profile:", error.response?.data || error.message);
@@ -169,7 +206,7 @@ export const getUserProfile = async (userId) => {
 
 export const updateUserProfile = async (userId, userData) => {
   try {
-    const response = await api.put(`/api/users/${userId}`, userData);
+    const response = await api.put(`/users/${userId}`, userData);
     return response.data;
   } catch (error) {
     console.error("Failed to update user profile:", error.response?.data || error.message);

@@ -15,7 +15,8 @@ function CreateListing() {
     category: "vegetables",
     location: user?.location || "",
     currency: "KES",
-    images: []
+    images: [],
+    unit: ""
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -91,6 +92,30 @@ function CreateListing() {
       setLoading(false);
     }
   };
+
+  // Show waiting for approval message if not approved
+  if (!user?.isApproved) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.card}>
+          <div className={styles.header}>
+            <h1 className={styles.title}>Account Pending Approval</h1>
+            <p className={styles.subtitle}>Please wait for admin approval before creating listings</p>
+          </div>
+          <div className={styles.message}>
+            <p>Your account is currently pending approval from our administrators. This process typically takes 1-2 business days.</p>
+            <p>You will be notified via email once your account has been approved.</p>
+            <p>In the meantime, you can:</p>
+            <ul>
+              <li>Complete your profile information</li>
+              <li>Browse existing listings</li>
+              <li>Contact support if you have any questions</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.container}>
@@ -200,6 +225,28 @@ function CreateListing() {
                 min="1"
                 placeholder="Enter quantity"
               />
+            </div>
+
+            <div className={styles.formGroup}>
+              <label htmlFor="unit" className={styles.label}>
+                Unit
+              </label>
+              <select
+                id="unit"
+                name="unit"
+                value={formData.unit}
+                onChange={handleChange}
+                className={styles.select}
+                required
+              >
+                <option value="">Select unit</option>
+                <option value="kg">Kilograms (kg)</option>
+                <option value="g">Grams (g)</option>
+                <option value="l">Liters (L)</option>
+                <option value="ml">Milliliters (mL)</option>
+                <option value="piece">Piece</option>
+                <option value="bundle">Bundle</option>
+              </select>
             </div>
           </div>
 

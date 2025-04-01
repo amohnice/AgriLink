@@ -5,6 +5,7 @@ import Login from '../pages/Login';
 import Register from '../pages/Register';
 import Listings from '../pages/Listings';
 import CreateListing from '../pages/CreateListing';
+import EditListing from '../pages/EditListing';
 import FarmerDashboard from '../pages/FarmerDashboard';
 import BuyerDashboard from '../pages/BuyerDashboard';
 import Profile from '../pages/Profile';
@@ -131,10 +132,28 @@ function AppRoutes() {
         path="/buyer/*"
         element={
           <BuyerRoute>
-            <Routes>
-              <Route path="/dashboard" element={<BuyerDashboard />} />
-            </Routes>
+            <BuyerDashboard />
           </BuyerRoute>
+        }
+      />
+
+      {/* Create listing route */}
+      <Route
+        path="/create-listing"
+        element={
+          <FarmerRoute>
+            <CreateListing />
+          </FarmerRoute>
+        }
+      />
+
+      {/* Edit listing route */}
+      <Route
+        path="/listings/:id/edit"
+        element={
+          <FarmerRoute>
+            <EditListing />
+          </FarmerRoute>
         }
       />
     </Routes>

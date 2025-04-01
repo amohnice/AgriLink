@@ -34,6 +34,35 @@
   font-size: 1.1rem;
 }
 
+.message {
+  text-align: center;
+  color: #4a5568;
+  line-height: 1.6;
+}
+
+.message p {
+  margin-bottom: 1rem;
+}
+
+.message ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 1rem 0;
+}
+
+.message li {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+  position: relative;
+}
+
+.message li:before {
+  content: "•";
+  color: #4299e1;
+  position: absolute;
+  left: 0;
+}
+
 .form {
   display: flex;
   flex-direction: column;
@@ -125,7 +154,7 @@
 
 .imagePreviews {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 1rem;
   margin-top: 1rem;
 }
@@ -141,25 +170,23 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 0.5rem;
 }
 
 .removeImage {
   position: absolute;
-  top: 0.25rem;
-  right: 0.25rem;
-  width: 1.5rem;
-  height: 1.5rem;
-  border-radius: 9999px;
+  top: 0.5rem;
+  right: 0.5rem;
   background-color: rgba(0, 0, 0, 0.5);
   color: white;
   border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  font-size: 1rem;
-  line-height: 1;
+  font-size: 1.2rem;
   transition: background-color 0.2s;
 }
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { fetchListings } from '../api/api';
 import { initiateMpesaPayment } from '../api/mpesa';
@@ -16,6 +16,7 @@ function ListingDetails() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const { id } = useParams();
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchListing = async () => {
@@ -98,8 +99,16 @@ function ListingDetails() {
     );
   }
 
-  const isOwner = user?.id === listing.seller?._id;
+  const isOwner = user?._id === listing.seller?._id;
   const isBuyer = user?.role === 'buyer';
+  const isFarmer = user?.role === 'farmer';
+
+  // Add console logging for debugging
+  console.log('User:', user);
+  console.log('Listing:', listing);
+  console.log('Is Owner:', isOwner);
+  console.log('User ID:', user?._id);
+  console.log('Seller ID:', listing.seller?._id);
 
   return (
     <div className={styles.container}>
@@ -107,14 +116,20 @@ function ListingDetails() {
         <Link to="/listings" className={styles.backButton}>
           ← Back to Listings
         </Link>
-        {isOwner && (
+        {isFarmer && (
           <div className={styles.actions}>
-            <Link
-              to={`/listings/${listing._id}/edit`}
-              className={`${styles.button} ${styles.editButton}`}
-            >
-              Edit Listing
-            </Link>
+            {isOwner ? (
+              <button
+                onClick={() => navigate(`/listings/${id}/edit`)}
+                className={`${styles.button} ${styles.editButton}`}
+              >
+                Edit Listing
+              </button>
+            ) : (
+              <div className={styles.message}>
+                <p>You can only edit your own listings.</p>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -171,6 +186,10 @@ function ListingDetails() {
                     Pay with M-Pesa
                   </button>
                 </>
+              ) : isFarmer ? (
+                <div className={styles.message}>
+                  <p>You can only edit your own listings.</p>
+                </div>
               ) : (
                 <div className={styles.message}>
                   <p>You need a buyer account to purchase or contact the seller.</p>

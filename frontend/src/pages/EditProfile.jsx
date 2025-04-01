@@ -21,7 +21,7 @@ function EditProfile() {
   useEffect(() => {
     const loadProfile = async () => {
       try {
-        const profile = await getUserProfile(user.id);
+        const profile = await getUserProfile(user._id);
         setFormData({
           name: profile.name || '',
           email: profile.email || '',
@@ -37,7 +37,7 @@ function EditProfile() {
     };
 
     loadProfile();
-  }, [user.id]);
+  }, [user._id]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -53,7 +53,7 @@ function EditProfile() {
     setSuccess('');
 
     try {
-      await updateUserProfile(user.id, formData);
+      await updateUserProfile(user._id, formData);
       setSuccess('Profile updated successfully');
       setTimeout(() => navigate('/profile'), 2000);
     } catch (err) {
