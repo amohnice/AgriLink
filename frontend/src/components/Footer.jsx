@@ -47,6 +47,9 @@ function Footer() {
             <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
               <i className="fab fa-linkedin"></i>
             </a>
+            <a href="https://tiktok.com" target="_blank" rel="noopener noreferrer" aria-label="TikTok">
+              <i className="fab fa-tiktok"></i>
+            </a>
           </div>
         </div>
       </div>
