@@ -1,0 +1,350 @@
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  background: linear-gradient(135deg, var(--bg-light) 0%, white 100%);
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 3rem;
+  position: relative;
+  padding: 3rem 0;
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  border-radius: var(--border-radius);
+  color: white;
+  overflow: hidden;
+}
+
+.header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('/images/pattern.svg') repeat;
+  opacity: 0.1;
+  animation: patternMove 20s linear infinite;
+}
+
+@keyframes patternMove {
+  from { background-position: 0 0; }
+  to { background-position: 100% 100%; }
+}
+
+.header h1 {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  position: relative;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.header p {
+  font-size: 1.25rem;
+  opacity: 0.9;
+  position: relative;
+}
+
+.content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+}
+
+.contactInfo {
+  background: white;
+  padding: 2.5rem;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-md);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid var(--border-color);
+}
+
+.contactInfo:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
+}
+
+.contactInfo h2 {
+  color: var(--text-primary);
+  margin-bottom: 2rem;
+  font-size: 1.75rem;
+  position: relative;
+  padding-bottom: 0.5rem;
+}
+
+.contactInfo h2::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 50px;
+  height: 3px;
+  background: var(--color-primary);
+}
+
+.contactDetails {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.contactItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--bg-card);
+  border-radius: var(--border-radius);
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.contactItem:hover {
+  transform: translateX(5px);
+  background: var(--color-primary-light);
+}
+
+.contactItem i {
+  font-size: 1.5rem;
+  color: var(--color-primary);
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-light);
+  border-radius: 50%;
+}
+
+.contactItem h3 {
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+  font-size: 1.1rem;
+}
+
+.contactItem p {
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.social {
+  margin-top: 2rem;
+}
+
+.social h2 {
+  color: var(--text-primary);
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+}
+
+.socialLinks {
+  display: flex;
+  gap: 1rem;
+}
+
+.socialLink {
+  width: 45px;
+  height: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-card);
+  border-radius: 50%;
+  color: var(--color-primary);
+  font-size: 1.25rem;
+  transition: all 0.3s ease;
+  border: 1px solid var(--border-color);
+}
+
+.socialLink:hover {
+  background: var(--color-primary);
+  color: white;
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+}
+
+.contactForm {
+  background: white;
+  padding: 2.5rem;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-md);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid var(--border-color);
+}
+
+.contactForm:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
+}
+
+.contactForm h2 {
+  color: var(--text-primary);
+  margin-bottom: 2rem;
+  font-size: 1.75rem;
+  position: relative;
+  padding-bottom: 0.5rem;
+}
+
+.contactForm h2::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 50px;
+  height: 3px;
+  background: var(--color-primary);
+}
+
+.formGroup {
+  margin-bottom: 1.5rem;
+}
+
+.formGroup label {
+  display: block;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.formGroup input,
+.formGroup textarea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  background: var(--bg-card);
+}
+
+.formGroup input:focus,
+.formGroup textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-light);
+  background: white;
+}
+
+.formGroup textarea {
+  min-height: 150px;
+  resize: vertical;
+}
+
+.submitButton {
+  background: var(--color-primary);
+  color: white;
+  padding: 1rem 2rem;
+  border: none;
+  border-radius: var(--border-radius);
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.submitButton::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  transition: 0.5s;
+}
+
+.submitButton:hover {
+  background: var(--color-primary-dark);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.submitButton:hover::before {
+  left: 100%;
+}
+
+.submitButton:disabled {
+  background: var(--color-disabled);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.status {
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: var(--border-radius);
+  text-align: center;
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.status.success {
+  background: var(--color-success-light);
+  color: var(--color-success);
+  border: 1px solid var(--color-success);
+}
+
+.status.error {
+  background: var(--color-error-light);
+  color: var(--color-error);
+  border: 1px solid var(--color-error);
+}
+
+.status.loading {
+  background: var(--color-info-light);
+  color: var(--color-info);
+  border: 1px solid var(--color-info);
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+
+  .content {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  .header {
+    padding: 2rem 0;
+  }
+
+  .header h1 {
+    font-size: 2.5rem;
+  }
+
+  .contactInfo,
+  .contactForm {
+    padding: 1.5rem;
+  }
+
+  .contactItem {
+    padding: 0.75rem;
+  }
+
+  .socialLink {
+    width: 40px;
+    height: 40px;
+    font-size: 1.1rem;
+  }
+} 

@@ -15,6 +15,9 @@ import EditProfile from '../pages/EditProfile';
 import Settings from '../pages/Settings';
 import AdminDashboard from '../pages/admin/AdminDashboard';
 import Messages from '../pages/Messages';
+import About from '../pages/About';
+import Contact from '../pages/Contact';
+import HelpCenter from '../pages/HelpCenter';
 
 function ProtectedRoute({ children }) {
   const { user } = useAuth();
@@ -58,6 +61,9 @@ function AppRoutes() {
       <Route path="/register" element={<Register />} />
       <Route path="/listings" element={<Listings />} />
       <Route path="/listings/:id" element={<ListingDetails />} />
+      <Route path="/about" element={<About />} />
+      <Route path="/contact" element={<Contact />} />
+      <Route path="/help" element={<HelpCenter />} />
       
       {/* Protected routes accessible to all authenticated users */}
       <Route
