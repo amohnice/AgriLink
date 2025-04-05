@@ -1,4 +1,5 @@
 const Product = require("../models/Product");
+const User = require("../models/User");
 const { predictPrice } = require("../models/pricePredictionModel");
 const blockchain = require("../utils/blockchain");
 
@@ -123,9 +124,104 @@ const updateProduct = async (req, res) => {
   }
 };
 
+// Get recent products
+const getRecentProducts = async (req, res) => {
+  try {
+    const products = await Product.find()
+      .populate("seller", "name email")
+      .sort({ createdAt: -1 })
+      .limit(10);
+    res.json(products);
+  } catch (error) {
+    console.error("Error fetching recent products:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Get saved products for a user
+const getSavedProducts = async (req, res) => {
+  try {
+    console.log('Fetching saved products for user:', req.user.id);
+    
+    if (!req.user || !req.user.id) {
+      console.error('No user found in request');
+      return res.status(401).json({ message: "User not authenticated" });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      console.error('User not found:', req.user.id);
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    console.log('User found:', user._id, 'Saved listings count:', user.savedListings?.length || 0);
+
+    const populatedUser = await User.findById(user._id).populate({
+      path: 'savedListings',
+      populate: {
+        path: 'seller',
+        select: 'name email'
+      }
+    });
+
+    if (!populatedUser) {
+      console.error('Failed to populate user data');
+      return res.status(500).json({ message: "Failed to retrieve saved listings" });
+    }
+
+    console.log('Successfully populated saved listings. Count:', populatedUser.savedListings?.length || 0);
+    res.json(populatedUser.savedListings || []);
+  } catch (error) {
+    console.error("Error fetching saved products:", error);
+    res.status(500).json({ 
+      message: "Server error", 
+      details: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
+  }
+};
+
+// Save a product
+const saveProduct = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    const productId = req.params.id;
+
+    if (!user.savedListings.includes(productId)) {
+      user.savedListings.push(productId);
+      await user.save();
+    }
+
+    res.json({ message: "Product saved successfully" });
+  } catch (error) {
+    console.error("Error saving product:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Unsave a product
+const unsaveProduct = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    const productId = req.params.id;
+
+    user.savedListings = user.savedListings.filter(id => id.toString() !== productId);
+    await user.save();
+
+    res.json({ message: "Product removed from saved items" });
+  } catch (error) {
+    console.error("Error removing saved product:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 module.exports = {
   getProducts,
   getProductById,
   createProduct,
-  updateProduct
+  updateProduct,
+  getRecentProducts,
+  getSavedProducts,
+  saveProduct,
+  unsaveProduct
 };

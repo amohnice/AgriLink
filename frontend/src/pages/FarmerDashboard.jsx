@@ -93,7 +93,7 @@ function FarmerDashboard() {
         <div className={styles.section}>
           <div className={styles.sectionHeader}>
             <h2 className={styles.sectionTitle}>Your Listings</h2>
-            <Link to="/listings/new" className={styles.button}>
+            <Link to="/create-listing" className={styles.button}>
               Create New Listing
             </Link>
           </div>
@@ -104,7 +104,7 @@ function FarmerDashboard() {
             {myListings.length === 0 ? (
               <div className={styles.empty}>
                 <p>You haven't created any listings yet.</p>
-                <Link to="/listings/new" className={styles.button}>
+                <Link to="/create-listing" className={styles.button}>
                   Create Your First Listing
                 </Link>
               </div>

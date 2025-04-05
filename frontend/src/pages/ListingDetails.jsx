@@ -125,11 +125,7 @@ function ListingDetails() {
               >
                 Edit Listing
               </button>
-            ) : (
-              <div className={styles.message}>
-                <p>You can only edit your own listings.</p>
-              </div>
-            )}
+            ) : null}
           </div>
         )}
       </div>
@@ -186,11 +182,7 @@ function ListingDetails() {
                     Pay with M-Pesa
                   </button>
                 </>
-              ) : isFarmer ? (
-                <div className={styles.message}>
-                  <p>You can only edit your own listings.</p>
-                </div>
-              ) : (
+              ) : isFarmer ? null : (
                 <div className={styles.message}>
                   <p>You need a buyer account to purchase or contact the seller.</p>
                 </div>
