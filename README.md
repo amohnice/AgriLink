@@ -1,6 +1,6 @@
 # AgriLink
 
-AgriLink is a modern web application that connects farmers and buyers in a sustainable agricultural marketplace. The platform facilitates direct trading between farmers and buyers, making it easier to source and sell agricultural products.
+AgriLink is a modern web application that connects farmers and buyers in a sustainable agricultural marketplace. The platform facilitates direct trading between farmers and buyers, making it easier to source and sell agricultural products while leveraging AI capabilities for enhanced user experience.
 
 ## Features
 
@@ -10,6 +10,7 @@ AgriLink is a modern web application that connects farmers and buyers in a susta
 - Direct communication with buyers
 - Sales analytics and reporting
 - Profile management
+- AI-powered pricing suggestions
 
 ### For Buyers
 - Browse available agricultural products
@@ -17,6 +18,7 @@ AgriLink is a modern web application that connects farmers and buyers in a susta
 - Track orders and purchase history
 - Save favorite listings
 - Profile customization
+- AI-assisted product recommendations
 
 ## Technology Stack
 
@@ -37,9 +39,9 @@ AgriLink is a modern web application that connects farmers and buyers in a susta
 ## Getting Started
 
 ### Prerequisites
-- Node.js (v14 or higher)
-- npm or yarn
-- MongoDB
+- Node.js (v16 or higher)
+- npm (v8 or higher) or yarn
+- MongoDB (v5.0 or higher)
 
 ### Installation
 
@@ -64,11 +66,19 @@ npm install
 ```bash
 # In the backend directory, create a .env file
 cp .env.example .env
-# Edit .env with your configuration
+
+# Required environment variables for backend:
+PORT=5000
+MONGODB_URI=your_mongodb_connection_string
+JWT_SECRET=your_jwt_secret
+NODE_ENV=development
 
 # In the frontend directory, create a .env file
 cp .env.example .env
-# Edit .env with your configuration
+
+# Required environment variables for frontend:
+VITE_API_URL=http://localhost:5000
+VITE_SOCKET_URL=http://localhost:5000
 ```
 
 4. Start the development servers
@@ -93,7 +103,9 @@ agrilink/
 │   │   ├── pages/         # Page components
 │   │   ├── styles/        # CSS modules and global styles
 │   │   ├── routes/        # Route configurations
-│   │   └── api/          # API service layer
+│   │   ├── assets/        # Static assets and images
+│   │   ├── api/          # API service layer
+│   │   └── ai.jsx        # AI integration components
 │   └── public/           # Static assets
 └── backend/
     ├── src/
@@ -106,6 +118,13 @@ agrilink/
 ```
 
 ## Key Features
+
+### AI Integration
+- Smart product recommendations
+- Price optimization suggestions
+- Market trend analysis
+- Crop yield predictions
+- Intelligent search and filtering
 
 ### Authentication
 - JWT-based authentication
